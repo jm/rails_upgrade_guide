@@ -1,16 +1,16 @@
 ## Getting bootable
 
-So, you've prepped the application, got the new files generated, and are now ready to move forward with the upgrade.  First, we're going to get the application reconfigured with the new style configuration files, and then we'll make some essential code changes.
+So, you've prepped the application, got the new files generated, and are now ready to move forward with the upgrade.  First, we're going to get the application reconfigured with the new-style configuration files, and then we'll make some essential code changes.
 
 ### Configuring your app again
 
-Now comes the task of configuration.  There aren't a whole ton of changes or anything, but navigating them can trip up the novice and journey(wo)man alike.  Things like initializers and your settings in `database.yml` can generally stay the same; the main thrust of the changes have to do with `environment.rb`, the router, and gem vendoring.
+Now comes the task of configuration.  There aren't a whole ton of changes, but navigating them can trip up the novice and journey(wo)man alike.  Things like initializers and your settings in `database.yml` can generally stay the same; the main changes have to do with `environment.rb`, the router, and gem vendoring.
 
 > **PROTIP:** When using SQLite, the database file is now the `database` key rather than the `dbfile` key.
 
 ### Configuring the environment
 
-In all previous Rails versions, most configuration and initialization happened in `config/environment.rb`, but in Rails 3, most of this logic is moved to `config/application.rb` and a host of special initializers in `config/initializers`.  If open up `config/environment.rb`, you'll notice it's been seriously slimmed down and looks like this now:
+In all previous Rails versions, most configuration and initialization happened in `config/environment.rb`. In Rails 3, most of this logic has moved to `config/application.rb` and a host of special initializers in `config/initializers`.  If you open up `config/environment.rb`, you'll notice it's been seriously slimmed down, and looks like this now:
 
     # Load the rails application
     require File.expand_path('../application', __FILE__)
@@ -18,9 +18,9 @@ In all previous Rails versions, most configuration and initialization happened i
     # Initialize the rails application
     YourApp::Application.initialize!
 
-Simple: the `application.rb` file is required and then the `Application` (Rack endpoint for your Rails application) is initialized.  The `YourApp` constant is generated based on the folder name for your app (i.e., `rails ~/code/my_super_app` would make it `MySuperApp`).  The constant doesn't have any special relationship to the folder the app lives in so you can rename it at will (so long as you do it everywhere it's used), but you'll be using this constant in a few places, so if you change it be sure to make it something useful.
+Simple: the `application.rb` file is required and then the `Application` (Rack endpoint for your Rails application) is initialized.  The `YourApp` constant is generated based on the folder name for your app (i.e., `rails ~/code/my_super_app` would make it `MySuperApp`).  The constant doesn't have any special relationship to the folder the app lives in, so you can rename it at will (so long as you do it everywhere it's used). But be careful; since you'll be using this constant in a few places, if you change it be sure to make it something useful.
 
-Now open up `application.rb`; if you generated the files using the Rails 3 generator, you should have one that looks something like this:
+Now open up `application.rb`. If you generated the files using the Rails 3 generator, you should have one that looks something like this:
 
     module TestDevApp
       class Application < Rails::Application
@@ -31,7 +31,7 @@ Now open up `application.rb`; if you generated the files using the Rails 3 gener
       end
     end
 
-For the most part, all the code inside the Rails initializer block (i.e., all your `config.*` calls) from your old `environment.rb` should transfer straight over: just use the `rails:upgrade:configuration` method or copy and paste them inside the class body.  That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend that you move it into either an initializer or into the bottom of `application.rb`.
+For the most part, all the code inside the Rails initializer block from your old `environment.rb` (i.e., all your `config.*` calls) should transfer straight over: just use the `rails:upgrade:configuration` method or copy and paste them inside the class body.  That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend  you move it either into an initializer or to the bottom of `application.rb`.
 
 Next, take a look at some of the newly generated code.  You'll notice a block like this:
 
@@ -41,17 +41,17 @@ Next, take a look at some of the newly generated code.  You'll notice a block li
       g.test_framework  :test_unit, :fixture => true
     end
 
-This is where you can configure what ORM, test framework, and template engine that Rails will use.  Since you're upgrading existing code, you'll probably stick with the defaults (unless, of course, you're already using something like `haml`), but you could substitute in something like `:datamapper` or `:sequel` for `:active_record`, `:haml` for `:erb`, or `:rspec` for `:test_unit` (once they get it working with Rails 3).  Doing so will set the generators for models, views, etc. to use your tool of choice; for example, if you generate a scaffold with `haml` and `rspec` as your tools, it should in theory generate the templates with Haml syntax and the tests using RSpec (I don't know if all these generators are available yet, but they should be soon).
+This is where you can configure what ORM, test framework, and template engine Rails will use.  Since you're upgrading existing code, you'll probably stick with the defaults (unless, of course, you're already using something like `haml`), but you could substitute in something like `:datamapper` or `:sequel` for `:active_record`, `:haml` for `:erb`, or `:rspec` for `:test_unit` (once they get it working with Rails 3).  Doing so will set the generators for models, views, etc., to use your tool of choice. For example, if you generate a scaffold with `haml` and `rspec` as your tools, it should in theory generate the templates with Haml syntax and the tests using RSpec. (I don't know if all these generators are available yet, but they should be soon.)
 
 The `config/application.rb` file also houses some configuration for other things.
 
-* If you need to configure internationalization, it's been moved to `application.rb`.  Rails 3 comes equipped with a really powerful i18n toolkit powered by the `i18n` gem*http://github.com/svenfuchs/i18n*{.fn}.  The defaults that Rails sets up will work for most people (default locale is `en` and all translations in the default directory are automatically imported), so you may not need to touch anything, but if you need to customize, this is the place to do it.
-* You may want to set a default timezone.  I usually stick with UTC since it's easy to convert on a per-user basis to their desired timezone, but you might want to set it your timezone or the server's timezone.
-* Your favorite old haunts from `config/environment.rb` such as `config.plugins`, `config.load_paths`, etc. are still there (even though `config.gems` is not).
+* If you need to configure internationalization, it's been moved to `application.rb`.  Rails 3 comes equipped with a really powerful i18n toolkit powered by the `i18n` gem*http://github.com/svenfuchs/i18n*{.fn}.  The defaults that Rails sets up will work for most people (default locale is `en` and all translations in the default directory are automatically imported), so you may not need to touch anything. But if you need to customize, this is the place to do it.
+* You may want to set a default timezone.  I usually stick with UTC, since it's easy to convert on a per-user basis to their desired timezone, but you might want to set it to your timezone or the server's timezone.
+* Your favorite old haunts from `config/environment.rb` such as `config.plugins`, `config.load_paths`, etc., are still there (even though `config.gems` is not).
 
-Other configuration bits like custom inflections, mime types, and so on have been moved out into their own initializers that you can find under `config/initializers`.  You'll also notice that many things that were once in `environment.rb` have been moved out into new initializers (such as custom inflections).  You'll probably want to/have to move these things out of `application.rb` and into the proper initializer.  
+Many of the other configuration bits that were once in `environment.rb`, like custom inflections, mime types, and so on, have been moved out into their own initializers in the `config/initializers` directory. You'll probably want to/have to move these things out of `application.rb` and into the proper initializer.  
 
-If you opted to keep any custom initializers or specialized environment file during the generation process, you'll probably need to go in there and update the syntax.  Many of these (especially the environment files like `config/environments/production.rb`) now requires a new block syntax:
+If you opted to keep any custom initializers or specialized environment files during the generation process, you'll probably need to go in there and update the syntax.  Many of these (especially the environment files like `config/environments/production.rb`) now require a new block syntax:
 
     # Rails 2.x
     config.cache_classes = false
@@ -63,15 +63,15 @@ If you opted to keep any custom initializers or specialized environment file dur
       config.action_controller.perform_caching = true
     end
     
-All configuration happens inside the `Application` object for your Rails app, so these configuration files, too, need to be executed inside of it.  As I said previously, most things in there should still work fine once wrapped in the block.
+All configuration happens inside the `Application` object for your Rails app, so these configuration files, too, need to be executed inside of it.  As I said, most things in there should still work fine once wrapped in the block.
 
 #### Converting your routes file
 
-The next step is to move your routes to the Rails 3 router syntax.  The new router is great, but it's not incredibly easy to migrate existing routes over to the new syntax.  Upgrading your routes is fairly simple so long as you haven't done anything complex; it's just not as easy as copying and pasting.  Some things, like `namespaces` work the same, but most other things have a much changed syntax.
+The next step is to move your routes to the Rails 3 router syntax.  The new router is great, but it's not incredibly easy to migrate existing routes over to the new syntax.  Upgrading your routes is fairly simple so long as you haven't done anything complex; it's just not as easy as copying and pasting.  Some things, like `namespaces`, work the same, but most other things have a much-changed syntax.
 
 > **PROTIP**: You don't *have* to upgrade your routes immediately; the Rails core team has a legacy mapper in place at least until Rails 3.1.  It is recommended that you do it as soon as possible, though, since that mapper will not always be there.
 
-You can automate upgrading your routes file with the `rails:upgrade:routes` task; it should handle nearly every case you throw at it.  In case it doesn't though, I'm going to walk through some manual upgrade cases.  To start with the simplest case, mapping the root route (i.e., for the "/" path) previously looked like this:
+You can automate upgrading your routes file with the `rails:upgrade:routes` task; it should handle nearly every case you throw at it.  In case it doesn't, though, I'm going to walk you through some manual upgrade cases.  To start with the simplest case, mapping the root route (i.e., for the "/" path) previously looked like this:
 
     map.root :controller => 'home', :action => 'index'
 
@@ -79,7 +79,9 @@ This maps the root path to the `index` action on `HomeController`.  In Rails 3, 
 
     root :to => 'home#index'
 
-Note that rather than specify the controller and action as hash arguments they are now specified in a pattern typically seen in documentation (i.e., "class#method").  Moving up the complexity scale, to convert a simple, normal route, start with a route like:
+Note that rather than specify the controller and action as hash arguments, they are now specified in a pattern typically seen in documentation (i.e., "class#method").  
+
+Moving up the complexity scale, to convert a simple, normal route, start with a route like:
 
     map.connect '/posts/mine', :controller => 'posts', :action => 'index'
 
@@ -87,6 +89,8 @@ This connects the path "http://example.com/posts/mine" to the `index` action on 
     
     match '/posts/mine', :to => 'posts#index'
 
+> **PROTIP**: TODO TODO TODO 	The next example here (/mine) is a little confusing.  First, you had been talking about a /posts/mine route, and you switch to a /mine route (but still to the PostsController).  It's not immediately clear to me whether this is an oversight/typo, or an intentional switch to a different route, because the example seems focused on how to add a type, not how to route a shortcut route to a regular controller. Also, the language doesn't make it entirely clear that this is still following the "here's the Rails 2 route, followed by the equivalent Rails 3 route" format, because the last sentence on p. 36 says you'd "just follow the same pattern as in Rails 2.x", which sorta-kinda suggests that, for routes needing to specify extra params, you revert back to map.connect.  The fact that you follow up with a Rails 3 route makes that interpretation impossible, but it seems to stumble here for me.  I'd suggest the last sentence on p. 36 something like this:  "In Rails 2, you provide extra parameters like this:" and then the map.connect route, then "The same route in Rails 3 looks very similar:"
+	
 If you wanted to provide extra parameters, you would simply follow the same pattern as in Rails 2.x:
 
     map.connect '/mine', :controller => 'posts', :action => 'index', 
@@ -106,7 +110,9 @@ This route generates helper methods named `login_path` and `login_url` and conne
     
 Note that the method called remains the same (unlike in Rails 2.x), but we add an `:as` parameter to indicate what the route is named.
 
-Resource routes have seen a significant shift also.  Previously, specifying special methods for the collection and members of the collection of resources required a sticky looking set of hashes:
+TODO : It's unclear to me what you mean here by "the method called remains the same", or, whatever that means, how it differs from Rails 2.x.  I feel like I'm missing something.
+
+Resource routes have seen a significant shift also.  Previously, specifying special methods for the collection and members of the collection of resources required a sticky-looking set of hashes:
 
     map.resources :users, :member => {:ban => :post} do |users|
       # Child routes here...
@@ -120,9 +126,9 @@ In Rails 3, these methods are broken out into their own block inside the `resour
       end
     end
 
-Member methods go in a `member` block, `collection` methods go in a `collection` block.  Also note the form of request method as the method call, the action name as a `Symbol` argument; the order is reversed from the previous syntax.
+Member methods go in a `member` block and `collection` methods go in a `collection` block.  Also note the request method (`post`) ss the method call and the action name as a `Symbol` (`:ban`) is the argument; their order is reversed from the old Rails 2 hash-style syntax.
 
-Nesting another set of resources inside of a resource in Rails 2.x looked like this:
+Nesting another set of resources inside a resource in Rails 2.x looked like this:
 
     map.resources :posts do |post|
       post.resources :comments
@@ -148,11 +154,11 @@ The `:requirements` argument specifies what parameter to check and a pattern to 
     match '/people/participants/:participant_id', :to => 'participants#show', 
           :constraints => { :participant_id => /^[a-z]{2}\d+/i}
 
-So, essentially the `requirements` argument is now the `constraints` argument, but it's not exactly the same: Rails 3 makes the constraints/requirements mechanism much more robust.  You can read about some of the new features in Section 4.3.
+So, essentially the `requirements` argument is now the `constraints` argument, but it's not exactly the same: Rails 3 makes the constraints/requirements mechanism much more robust.  You can read about some of the new features in Section 4.3.   TODO: when I build the HTML, it appears to be numbering the chapters slightly differently. Does this Section number need to auto-update to point to the right place?
 
 #### Setting up the gem bundler
 
-Rails 2's gem vendoring solution left much to be desired: between issues with requiring the gems properly to problems with the gem detection (I can't tell you how many times I nixed a gem from the list because it kept telling me to install it even though it was already installed), Rails seriously needed a replacement for such a vital piece of infrastructure.  These days we have Yehuda Katz's excellent bundler*http://github.com/carlhuda/bundler*{.fn}, which totally replaces `config.gem` in Rails 3.
+Rails 2's gem vendoring solution left much to be desired, from issues with properly requiring gems to problems with the gem detection (I can't tell you how many times I nixed a gem from the list because it kept telling me to install it even though it was already installed). Rails seriously needed a replacement for such a vital piece of infrastructure.  These days we have Yehuda Katz's excellent bundler*http://github.com/carlhuda/bundler*{.fn}, which totally replaces `config.gem` in Rails 3.
 
 Essentially, bundler works off of `Gemfiles` (kind of like `Rakefiles` in concept) that contain a description of what gems to get, how to get them, and when to get them.  Moving your gem requirements to a `Gemfile` isn't as simple as copying them over.  You can automate it using `rails:upgrade:gems`, but in the interest of greenfielding new apps with Rails 3 (or possibly using Bundler in non-Rails applications), I'm going to walk you through how to setup a Gemfile and  convert your Rails 2 code to it.
 
@@ -176,6 +182,8 @@ The version is now simply the second string requirement; if this is left out (i.
 * `:lib` key becomes the `:require` key
 * The `:version` key becomes a second, optional string argument
 * Move `:source` arguments to a `source` call to add it to the sources
+
+TODO : Question: Does the most recent 'source' call apply, or do they add to a collection of sources from which the require attempts to pull the gem? If it's a collection, is there any significance to the order in which the 'source' calls appear in the source?  Does it work from most-recent to oldest, or from first to last, or random or what?  If I have two (or more) 'source' calls in the Gemfile, and they both have (different) versions of a gem I'm requiring later, but only the second source has the right one, will it get it, or will it pull it from the first one and destroy my life?
 
 Now let's take a look at the `Gemfile` that Rails generated for you:
 
@@ -203,7 +211,7 @@ Now let's take a look at the `Gemfile` that Rails generated for you:
 
 Notice that it has added `mysql` as a dependency; when I generated this app, that's what I set as the database driver via the `-d` option.  Were you to specify something else (like `pg` or `sqlite`) it would have the proper dependency.  
 
-As mentioned before, `bundler` is much more powerful than `config.gem`, and one of the great features it adds is the concept of a gem "group."  You can specify a group of gems to only be required/activated in certain environments, so you can stop doing weird things with environment checks around your `config.gem` requirements.  You can see an example of this technique in the commented out requirements at the bottom of the generated `Gemfile`.  So, let's say I want to use `mocha`, but only when testing (obviously).  I would add this to `Gemfile`:
+As mentioned before, `bundler` is much more powerful than `config.gem`, and one of the great features it adds is the concept of a gem "group."  You can specify a group of gems to only be required/activated in certain environments, so you can stop doing weird things with environment checks around your `config.gem` requirements.  You can see an example of this technique in the commented-out requirements at the bottom of the generated `Gemfile`.  So, let's say I want to use `mocha`, but only when testing (obviously).  I would add this to `Gemfile`:
 
     group :test do
       gem "mocha"
@@ -215,7 +223,25 @@ As mentioned before, `bundler` is much more powerful than `config.gem`, and one 
     
 Now this gem will only be added in when running the app in the `testing` environment.  This technique is also useful for production only gems related to caching and what not.
 
-Now that you've got a proper `Gemfile`, run `bundle pack` if you want to vendor everything or `bundle install` to install the gems to system gems.  The `bundler` is much more powerful than `config.gem`, and it helps you do more advanced tasks (e.g., bundle directly from a Git repository as you can see in the generated `Gemfile`, specify granular paths, etc.).  So, once you move your `config.gem` calls over, you may want to look into the new features*http://github.com/carlhuda/bundler/blob/master/README.markdown*{.fn}.
+TODO : Question - Did you mean the `test` environment?  If I did
+
+    group :wilbur do
+      gem "badwilbur"
+    end
+
+but didn't have a 'wilbur' environment, it would never get loaded at all, right?
+
+Likewise, if I just want `bullet` in `development` mode, I would do
+
+    group :development
+      gem "bullet"
+    end
+
+So that these "group" names typically would be chosen to correspond to the normal test/development/production/staging environments in which we run apps?  Or do they have another significance, and the choice of :test for the `test` environment is accidental and still has to be specified somewhere else?
+TODO (end)
+TODO (end)
+
+Now that you've got a proper `Gemfile`, run `bundle pack` if you want to vendor everything or `bundle install` to install the gems to system gems.  The `bundler` is much more powerful than `config.gem`, and it helps you do more advanced tasks (e.g., bundle directly from a Git repository, as you can see in the generated `Gemfile`, specify granular paths, etc.).  So, once you move your `config.gem` calls over, you may want to look into the new features*http://github.com/carlhuda/bundler/blob/master/README.markdown*{.fn}.
 
 ### Code fixes
 
@@ -258,7 +284,7 @@ Let's take a look at a basic user notification mailer from Rails 2.x.
       end
     end
 
-This mailer simply alerts a user when they have a new friend in their social network in our hypothetical app: the user receives the e-mail, we send it from our notifier e-mail address, and we pass the user and their new friend as body parameters (they will show up as instance variables to the template oddly enough).  This API is sort of confusing (we're setting attributes using simple method calls, which is sort of ugly) and looks nothing like anything else in Rails.  Plus, it lacks anything like filters and so on, not to mention that to use it you have to use magical methods like `deliver_new_friend_notification`.  Now here's the same mailer using the new Action Mailer API:
+This mailer simply alerts a user when they have a new friend in their social network in our hypothetical app: the user receives the e-mail, we send it from our notifier e-mail address, and we pass the user and their new friend as body parameters (they will show up as instance variables to the template, oddly enough).  This API is sort of confusing (we're setting attributes using simple method calls, which is sort of ugly) and looks nothing like anything else in Rails.  Plus, it lacks anything like filters and so on, not to mention that to use it you have to use magical methods like `deliver_new_friend_notification`.  Now here's the same mailer using the new Action Mailer API:
 
     class UserMailer < ActionMailer::Base
       default :from => "notifier@example.com"
@@ -279,6 +305,8 @@ Much cleaner and closer to what we're used to.  Instance variables are carried o
     UserMailer.new_friend_notification(user, new_friend).deliver
     
 If you wanted the message as a string, you simply call `to_s` on the object returned from the mailer method rather than calling `create_*`.
+
+TODO : create_*?  Where's that?  Did you mean "rather than calling `deliver`" ?
 
 The handling of attachments is a bit cleaner also.  Previously, a mailer with attachments would look like this:
 
@@ -321,7 +349,7 @@ The Active Record DSL is radically different, largely thanks to its integration 
       named_scope :by, lambda {|u| :conditions => {:user_id => u.id}}
     end
     
-You can chain up named scopes infinitely, so if you were to have code like `Post.published.by(@user)`, it would find posts that were already published and written by the specified user.  What's actually going on there is that `Post.published` returns a `NamedScope` object which is then operated on again with the `by` method, adding more conditions, composing the SQL query that you'll eventually execute with a call like `all` or `find`.
+You can chain together named scopes infinitely, so if you were to have code like `Post.published.by(@user)`, it would find posts that were already published and written by the specified user.  What's actually going on there is that `Post.published` returns a `NamedScope` object, which is then operated on with the `by` method, adding more conditions, composing the SQL query you'll eventually execute with a call like `all` or `find`.
 
 ![Named scopes](scopes.png)
 {.img}
@@ -341,7 +369,7 @@ Just like a `named_scope`, these `Relation` objects chain up with each other and
 
 As you'll see in Section 4.4, this new syntax opens up a lot of possibilities that either weren't possible or were quite ugly with the old API.
 
-Now, let's take a look at converting some typical Rails 2.x model code into the new syntax.  Not every piece of the API is changing; in fact, much of the large scale ideas are staying the same. Calls like `Model.find(:all)`, `Model.find(:first)`, and `Model.find_by_field` will still work. It's mostly the code surrounding the actual composition of the SQL query that is changing: essentially you can't provide argument hashes for anything anymore.  For example, here's a simple query:
+Now, let's take a look at converting some typical Rails 2.x model code into the new syntax.  Not every piece of the API is changing; in fact, much of the large-scale ideas are staying the same. Calls like `Model.find(:all)`, `Model.find(:first)`, and `Model.find_by_field` will still work. It's mostly the code surrounding the actual composition of the SQL query that is changing: essentially you can't provide argument hashes for anything anymore ( TODO : This is confusing, and I don't know how to fix it.  What you can't do is provide hash args for :conditions, :limit, etc.  But you still provide hashes for the arguments to where(), for instance. TODO ).  For example, here's a simple query in Rails 2:
 
     Post.find(:all, :conditions => {:category_id => @category.id})
 
@@ -349,14 +377,14 @@ In Rails 3, the `:conditions` hash is transformed into a call to `where`:
 
     posts = Post.where(:category_id => @category.id)
     
-You can then operate on the posts variable just like an `Array` since it includes `Enumerable`:
+You can then operate on the posts variable just like an `Array`, since it includes `Enumerable`:
 
     posts.first       # => #<Post ...>
     posts.all         # => [#<Post ...>]
     
     posts.each {|post| post.destroy }
 
-Other similar hash arguments like `:limit`, `:order`, and `:select` are also methods now:
+Other, similar hash arguments, like `:limit`, `:order`, and `:select`, are also methods now:
 
     posts.limit(2).order("id DESC").select("body")
     
@@ -364,7 +392,7 @@ Even `:include`, which adds joins on, is now a method:
 
     posts.include(:author).where("publshed NOT NULL")
     
-That should get you started converting your code.  If you need more help, there are some great blog entries*My favorite is http://m.onkey.org/2010/1/22/active-record-query-interface*{.fn} and, of course the RDocs.*Currently only accessible at http://api.rails.info/*{.fn}
+That should get you started converting your code.  If you need more help, there are some great blog entries*My favorite is http://m.onkey.org/2010/1/22/active-record-query-interface*{.fn} and, of course, the RDocs.*Currently only accessible at http://api.rails.info/*{.fn}
 
 ### Minor pre-booting issues
 
@@ -376,7 +404,7 @@ As the Rails core team was moving towards Rails 3, an initializer was added to s
 
 #### Rack configuration is required
 
-If you regenerated your Rails application, you might have noticed that the Rails 3 generator gives you a `config.ru` file in your application root; if you're unfamiliar with how Rack*http://rack.rubyforge.org/*{.fn} works, `config.ru` is basically a configuration file that tells Rack where to find its enpoints.  Rails 3 is going seriously gung-ho on Rack, and as such, a `config.ru` is now required in your application to tell Rack how to mount it.  As noted earlier, the Rails 3 generator will spit one out for you, but if you're doing a manual upgrade for some reason, then you'll need to add one yourself.  
+If you regenerated your Rails application, you might have noticed that the Rails 3 generator gives you a `config.ru` file in your application root.  If you're unfamiliar with how Rack*http://rack.rubyforge.org/*{.fn} works, `config.ru` is basically a configuration file that tells Rack where to find its endpoints.  Rails 3 is going seriously gung-ho on Rack, and as such, a `config.ru` is now required in your application to tell Rack how to mount it.  As noted earlier, the Rails 3 generator will spit one out for you, but if you're doing a manual upgrade for some reason, then you'll need to add one yourself.  
 
 Interesting note: Remember that `YourApp::Application` class you created earlier in `application.rb`?  That's your Rack endpoint; that's why your `config.ru` looks like this (or you should create one that looks like this if you're doing all this manually): 
 
@@ -389,7 +417,7 @@ Neat, eh?  That's why I suggested you pick a meaningful name for that class: its
 
 ### Booting the application
 
-Rails went the "Merb way" and has consolidated its many `script/*` commands into the `rails` binscript (or the `script/rails` command).  So things like `generate`, `server`, `plugin`, etc. are now `rails generate` and so on.  
+Rails went the "Merb way" and has consolidated its many `script/*` commands into the `rails` binscript (or the `script/rails` command).  So things like `generate`, `server`, `plugin`, etc., are now `rails generate` and so on.  
 
 Was `script/...`         | New command
 -------------------------|-----------------------------------
@@ -404,7 +432,7 @@ Was `script/...`         | New command
 `about`		               | `rake about`		
 `dbconsole`              | `rails dbconsole` (or `rails db`)
 
-So, to start the application up, just run `rails server` inside the application root (or, optionally, `ruby script/rails server`).  Once the server's booted, navigate over to `http://localhost:3000` and you should see a familiar friend:
+So to start the application up, just run `rails server` inside the application root (or, optionally, `ruby script/rails server`).  Once the server's booted, navigate over to `http://localhost:3000` and you should see a familiar friend:
 
 ![You're on board!](http://media.tumblr.com/tumblr_kxctzqe4Su1qz4tvk.jpg){.screenshot}
 {.img}
@@ -417,7 +445,7 @@ Your application is booted, you can at least get a request into a controller, so
 
 #### Check out your views
 
-You'll want to give your views the once-over to make sure there's no deprecated code (`link_to_function` and friends being removed is probably going to be the most common), usage of removed/bad plugins, or usage of Ruby that's not supported on 1.8.7 or later.  Booting the application will catch many of these problems in models and controllers, but templates aren't evaluated until they're rendered, so something could still be lurking in there.  Also keep in mind that all output strings (i.e., things you output using `<%=`) are escaped by default; this will cause problems for any helper or method that outputs HTML (especially in your tests; see Section 4.2 for how to fix it).
+You'll want to give your views the once-over to make sure there's no deprecated code (the removal of `link_to_function` and friends is probably going to be the most common), usage of removed/bad plugins, or usage of Ruby that's not supported on 1.8.7 or later.  Booting the application will catch many of these problems in models and controllers, but templates aren't evaluated until they're rendered, so something could still be lurking in there.  Also keep in mind that all output strings (i.e., things you output using `<%=`) are escaped by default; this will cause problems for any helper or method that outputs HTML (especially in your tests; see Section 4.2 for how to fix it).
 
 #### Deprecations coming soon
 
@@ -425,7 +453,7 @@ There are a lot of things that are being deprecated in Rails 3.  Many of them wo
 
 * **`allow_concurrency` is no longer needed** Since Rails is Enterprise Thread Safe&trade; now, you no longer need this setting.
 * **Requiring `activerecord`/`activesupport`**  People could never remember whether it was `active_record` or `activerecord`, so the Rails team made it so that both will work.  Starting very soon, though, you will be required to use the underscored form (e.g., `active_record`).
-* **`filter_parameter_logging` API is changing**  The `filter_parameter_logging` lets you set which parameter names to filter out of logs (e.g., don't log your users passwords).  This feature is now available by setting them up in `application.rb` like this: `config.filter_parameters << :password`
+* **`filter_parameter_logging` API is changing**  The `filter_parameter_logging` lets you set which parameter names to filter out of logs (e.g., don't log your users' passwords).  This feature is now available by setting them up in `application.rb` like this: `config.filter_parameters << :password`
 * **Active Record's errors API is different** If you're used to using `errors.on_base` or `errors.add_to_base`, then you'll need to learn the new API (check the deprecations checklist).
 
 
