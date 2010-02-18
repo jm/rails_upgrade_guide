@@ -306,7 +306,7 @@ Much cleaner and closer to what we're used to.  Instance variables are carried o
     
 If you wanted the message as a string, you simply call `to_s` on the object returned from the mailer method rather than calling `create_*`.
 
-TODO : create_*?  Where's that?  Did you mean "rather than calling `deliver`" ?
+TODO : `create_*`?  Where's that?  Did you mean "rather than calling `deliver`" ?
 
 The handling of attachments is a bit cleaner also.  Previously, a mailer with attachments would look like this:
 
