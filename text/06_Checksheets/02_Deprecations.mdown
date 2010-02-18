@@ -1,0 +1,117 @@
+
+## Checksheet: Deprecations
+
+This check list contains nearly every deprecation in Rails 3.  Many of them probably won't apply to you, but most of them will probably bite you in one place or another.
+
+### General/configuration
+
+&nbsp; | Deprecation | How to fix it
+-----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | `RAILS_ENV` is deprecated. | Change it to `Rails.env`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `RAILS_ROOT` is deprecated. | Change it to `Rails.root`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `RAILS_DEFAULT_LOGGER` is deprecated. | Change it to `Rails.logger`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Calling `filter_parameter_logging` is no longer supported. | Set/append to `config.filter_parameters` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Dispatcher.before_dispatch` is deprecated. | Please use `ActionDispatch::Callbacks.before` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Dispatcher.to_prepare` is deprecated. | Please use `config.to_prepare` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | Creating new `AC::Dispatcher` objects is deprecated. | Create/interact with the `Rails::Application` object instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.action_controller.`<br />`consider_all_requests_local` is deprecated. | Use `Rails.application.`<br />`config.consider_all_requests_local`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.action_controller.`<br />`allow_concurrency` is deprecated. | Use `Rails.application.`<br />`config.allow_concurrency` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `benchmark(:level)` has been deprecated. | Use `benchmark("message", :level => level)` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.view_path` / `config.view_path=` are deprecated. | Use `paths.app.views` / `paths.app.views=` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.routes_configuration_file` / `config.routes_configuration_file=` are deprecated. | Use `paths.config.routes` / `paths.config.routes=`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.routes_configuration_file` / `config.routes_configuration_file=` are deprecated. | Use `paths.config.routes` / `paths.config.routes=` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.database_configuration_file` / `config.database_configuration_file=` have been deprecated. |   Do `paths.config.`<br />`database`/`paths.config.`<br />`database=` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.controller`<br />`_paths` / `config.controller`<br />`_paths=` are deprecated. | Use `paths.app.`<br />`controllers` / `paths.app.`<br />`controllers=`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.log_path` / `config.log_path=` are deprecated. | Do `paths.log` / `paths.log=` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | The `gem` method in application templates deprecated the `:env` key. | Change it to `:only` |
+&#10063;&nbsp;&nbsp;&nbsp; | The `freeze!` method in application templates is deprecated. | It's no longer needed. |
+{.deprecation-table}
+
+### Plugins
+
+&nbsp; | Deprecation | How to fix it
+-----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | Putting Rake tasks in `[path]/tasks` or `[path]/rails/tasks` is no longer supported.  | Place them in `[path]/lib/tasks`. |
+{.deprecation-table}
+
+### Controllers/dispatch
+
+&nbsp; | Deprecation | How to fix it
+-----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | Disabling sessions for a single controller has been deprecated. | Sessions are lazy loaded, so don't worry about them if you don't use them. |
+&#10063;&nbsp;&nbsp;&nbsp; | `session.update` is no longer effective. | Use `session.replace` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `session.delete` is deprecated. | Use `session.clear` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `SessionHash#session_id` is deprecated. | Use `request.session_options[:id]` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `SessionHash#data` is deprecated. | Use `SessionHash#to_hash` instead. |
+{.deprecation-table}
+
+### Models
+
+&nbsp; | Deprecation | How to fix it
+-----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | `named_scope` is deprecated. | Change to `scope`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `Model.human_name` is deprecated. | Use `Model.model_name.human`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Adding callback methods named `after_save`, `after_create`, etc. is deprecated. | Create a method then call `after_save :method_name` (or whatever callback). |
+&#10063;&nbsp;&nbsp;&nbsp; | `errors.on_base` is deprecated. | Use `errors[:base]`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `errors.add_to_base` is deprecated. | Use `errors[:base] << error` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `errors.invalid?(attr)` has been deprecated. | Use `errors[attr].any?`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `errors.each_full` is deprecated. | Use `errors.to_a.each` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | Providing a block to `composed_of` is deprecated. | Provide a `:converter` argument with a lambda/`Proc`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `colorize_logging` has been moved. | Change the calls to `Rails::Subscriber.`<br />`colorize_logging`. |
+{.deprecation-table}
+
+### Views
+
+&nbsp; | Deprecation | How to fix it
+-----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | `error_message_on` takes an option hash instead of separate arguments. | Pass an options hash with `:prepend_text`, `:append_text`, and `:css_class` keys. |
+&#10063;&nbsp;&nbsp;&nbsp; | `number_with_delimiter` takes an options hash instead of arguments. |  Pass a hash with `:delimiter` and `:precision` keys. |
+&#10063;&nbsp;&nbsp;&nbsp; | `number_with_precision` takes an options hash rather than an argument. | Pass an options hash with a `:precision` key. |
+&#10063;&nbsp;&nbsp;&nbsp; | `number_to_human_size` takes an options hash rather than an argument. | Pass an options hash with a `:precision` key. |
+&#10063;&nbsp;&nbsp;&nbsp; | `truncate` takes an options hash instead of arguments. |  Pass a hash with `:length` and `:omission` keys. |
+&#10063;&nbsp;&nbsp;&nbsp; | `:popup` is deprecated on `link_to`. | (No fix) |
+{.deprecation-table}
+
+### Testing
+
+&nbsp; | Deprecation | How to fix it
+-----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | `model_instance.assert_valid` is deprecated. | Use `assert model_instance.valid?` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.template` is deprecated. | Use `controller.template`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.session` has been deprecated. | Use `request.session` instead.|
+&#10063;&nbsp;&nbsp;&nbsp; | `response.assigns` is deprecated. | Use `controller.assigns` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.layout` is deprecated. | Use `controller.template.layout`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.redirected_to` has been deprecated. | Use `response.redirect_url` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.redirect_url_match?` is deprecated. | Use `assert_match` and `response.redirect_url` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.rendered` has been deprecated. | Use `template.rendered` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.flash` is deprecated. | Use `request.flash`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.has_flash?` has been deprecated. | Use `request.flash.any?` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.has_flash_with_contents?` is deprecated. | Use `request.flash.any?`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.has_flash_object?` has been deprecated. | Use `request.flash[name]`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.has_session_object?` has been deprecated. | Use `request.session[name]` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.template_objects` is deprecated. | Use `template.assigns`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.has_template_object?` is deprecated. | Use `tempate.assigns[name].nil?`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `response.binary_content` is deprecated. | Use `response.body` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `test/mocks` won't be added to load paths automatically. | Add it yourself. |
+{.deprecation-table}
+
+### Mailers
+
+&nbsp; | Deprecation | How to fix it
+-----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | `default_charset` is deprecated. | Change it to `default :charset => value`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `default_content_type` is deprecated. | Change it to `default :content_type => value`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `default_mime_version` is deprecated. | Change it to `default :mime_version => value`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `default_implicit_parts_order` is deprecated. | Change it to `default :implicit_parts_order => value`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Calling `deliver` on the class instance | Call `deliver` on the mail object instance. |
+&#10063;&nbsp;&nbsp;&nbsp; | Setting `template_root=` | Use `prepend_view_path` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | Delivering mail with `deliver_*` | Use the `deliver` on the mailer instance instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | Creating a mail message with `create_*` | Call the mailer method and call `to_s` on the returned mail object |
+&#10063;&nbsp;&nbsp;&nbsp; | Setting `:body` variables | Use normal instance variables (like a controller) |
+&#10063;&nbsp;&nbsp;&nbsp; | `render_message` on `Message` is deprecated. | Use `render` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `set_content_type` on `Message` is deprecated. | Use `content_type` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `transfer_encoding` on `Message` is deprecated. | Use `content_transfer_encoding` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | Setting `transfer_encoding=` on `Message` is deprecated. | Set `content_transfer_encoding=` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `original_filename` on `Message` is deprecated. | Use `filename` instead. |
+{.deprecation-table}
+

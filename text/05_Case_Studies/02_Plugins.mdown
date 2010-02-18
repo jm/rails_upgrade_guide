@@ -1,0 +1,4 @@
+
+### Plugin Case Study: `restful_authentication`
+
+### Plugin Case Study: 

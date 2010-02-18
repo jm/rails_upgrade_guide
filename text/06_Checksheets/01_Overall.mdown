@@ -1,0 +1,42 @@
+
+## Checksheet: The Upgrade Process
+
+This checklist should give you a general guide to upgrade to Rails 3.
+
+### First Steps
+
+&#10063;&nbsp;&nbsp;&nbsp; | &nbsp;       |
+-----|-------------------|
+&#10063;&nbsp;&nbsp;&nbsp; | Install `rails_upgrade` plugin from `http://github.com/rails/rails_upgrade` |
+&#10063;&nbsp;&nbsp;&nbsp; | Run `rake rails:upgrade:check` and note the results |
+&#10063;&nbsp;&nbsp;&nbsp; | Run `rake rails:upgrade:backup` |
+&#10063;&nbsp;&nbsp;&nbsp; | Regenerate the application (i.e., `rails ./`) |
+{.overall-table}
+
+### Reconfiguration
+
+&#10063;&nbsp;&nbsp;&nbsp; | &nbsp;       |
+-----|-------------------|
+&#10063;&nbsp;&nbsp;&nbsp; | Move `Initializer` code from `environment.rb` to `application.rb` |
+&#10063;&nbsp;&nbsp;&nbsp; | Convert routes to new API |
+&#10063;&nbsp;&nbsp;&nbsp; | Create `Gemfile` |
+&#10063;&nbsp;&nbsp;&nbsp; | Move `config.gem` calls to `Gemfile` syntax |
+{.overall-table}
+
+### Fix code
+
+&#10063;&nbsp;&nbsp;&nbsp; | &nbsp;       |
+-----|-------------------|
+&#10063;&nbsp;&nbsp;&nbsp; | Remove old constants |
+&#10063;&nbsp;&nbsp;&nbsp; | Convert mailers to new API |
+&#10063;&nbsp;&nbsp;&nbsp; | Move to new Active Record API |
+&#10063;&nbsp;&nbsp;&nbsp; | Check for invalid and deprecated code in views |
+{.overall-table}
+
+### Booting
+
+&#10063;&nbsp;&nbsp;&nbsp; | &nbsp;       |
+-----|-------------------|
+&#10063;&nbsp;&nbsp;&nbsp; | Run tests, fix deprecation and other errors |
+&#10063;&nbsp;&nbsp;&nbsp; | Boot with `rails server` |
+{.overall-table}

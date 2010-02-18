@@ -1,0 +1,430 @@
+
+## Improving your application with Rails 3
+
+A lot of the refactoring and new few features in Rails can contribute to improving your codebase significantly if you take advantage of them.  In this section, we'll take a look at some of those features and changes and how to put them to use in your code today.
+
+### Cleaning up controllers
+
+Though the internals were torn apart, refactored, and greatly improved, the public API for controllers didn't change a whole lot in the move to Rails 3.  Even so, there were a couple of new features that can help you clean those controllers up.
+
+#### Responders
+
+If you've got a lot of RESTful controllers chock full of methods that look like this:
+
+    def create
+      @user = User.new(params[:user])
+
+      respond_to do |format|
+        if @user.save
+          flash[:notice] = 'User was successfully created.'
+          format.html { redirect_to(@user) }
+          format.xml  { render :xml => @user, :status => :created, :location => @user }
+        else
+          format.html { render :action => "new" }
+          format.xml  { render :xml => @user.errors, :status => :unprocessable_entity }
+        end
+      end
+    end
+
+...then you'll really appreciate the new `Responder` feature of Action Controller.  It can take all the logic in these boilerplate REST methods and wrap it into something that looks like this:
+
+    def create
+      @user = User.new(params[:user])
+      
+      flash[:notice] = "User was successfully created." if @user.save
+      
+      respond_with @user
+    end
+    
+Essentially, it takes all the conventional REST logic and wraps it up in a nice little method `respond_with`.  It works with all the standard REST methods: `index`, `new`, `create`, `edit`, `update`, and `destroy`.  You're required to also tell the controller which formats to respond with like this:
+
+    class UsersController
+      respond_to :html, :xml
+      
+      # Your REST methods here...
+    end
+    
+The `respond_to` method will accept any format you've defined a formatter for (defaults are `:html`, `:xml`, and `:json`).  Using this mechanism, you can cut about 50% of the code out of most RESTful controllers without sacrificing any of the control you'd have (unlike some of the plugins, which make you sacrifice some control over the logic flow).  To override any of the default behavior, simply provide a block to the `respond_with` call and add your overriding behavior.  For example, let's say you wanted to change the behavior when a user requests HTML:
+
+    def create
+      @user = User.new(params[:user])
+  
+      flash[:notice] = "User was successfully created." if @user.save
+  
+      respond_with(@user) do |format|
+        format.html { redirect_to root_path }
+      end
+    end
+
+You can also use this method with nested resources by simply providing the nesting as the argument list to `respond_with` (e.g., `respond_with(@account, @user)`).  
+
+#### Cleaner flash messages
+
+The Rails flash facility is a great way to pass simple objects or messages between requests, but adding an extra line of code just to stick a status message in the session gets annoying and verbose really quick.  Rails 3 adds the nice ability to be able to put messages in conventional flash keys (`:alert` and `:notice`) right in `redirect_to` calls:
+
+    format.html { redirect_to(@user, :notice => 'User was successfully created.') }
+
+This line of code will place `"User was successfully created."` in `flash[:notice]`.  You can do the same with `:alert`:
+
+    format.html { render :action => "new", :alert => 'There was a problem creating that post!' }
+
+This shortcut doesn't affect the usage of the `flash` hash at all; it just adds some nice syntactic sugar on top.
+
+### Creating improved views
+
+Action View is another component that got a significant internal refactoring, but it also received a bit of public API attention.
+
+#### Making your views safer
+
+In Rails 3, all output strings in views are automatically escaped; so rather than calling `h()` on a string (e.g., `h("my unsafe string!")`), it is automatically escaped.  This change means that if you have a helper or model method that returns HTML markup, it will spit the markup out as escaped HTML entities rather than HTML markup unless you tell Rails to make it a raw string.  You can do this in one of three ways.  The first is to use the new `raw` method like you would have previously used `h`:
+
+    raw("This is <strong>safe</strong>!")
+
+This will copy the string into the response body without escaping.  Strings also have a notion of being HTML safe, so you can mark it as such using the `html_safe!` method:
+
+    "this is <em>really</em> safe!".html_safe!
+
+Rails will then know that string is safe no matter where you pass it.  If it's a helper that you need to allow to inject markup, then you can also use the `safe_helper` method:
+
+    module ApplicationHelper
+      def join_and_bold(arr)
+        arr.map {|e| "<strong>#{e}</strong>"}.join(" ")
+      end
+    end
+
+    class MyController < ActionController::Base
+      safe_helper :join_and_bold
+    end
+    
+Now any markup returned from the `join_and_bold` method will be marked as raw.  If you have code that already uses the `h` method, don't worry: it gives the same result so it won't break anything.
+
+#### Better JavaScript with Rails 3
+
+As mentioned previously, the JavaScript helpers in Rails 3 have been totally rebuilt to facilitate a framework agnostic approach.  This change makes it dead easy to switch out your JavaScript frameworks without impacting your existing helper-driven code.  Unfortunately, though, this rewrite means that existing code that uses the JavaScript helpers is out of luck.
+
+> **PROTIP:** You're not *totally* out of luck.  The Rails team have extracted the previous Prototype helpers into their own plugin available at http://github.com/rails/prototype\_legacy\_helper
+
+The new API for the pieces that still exist in their previous forms has changed.  For example, this Rails 2.x code:
+
+    <%= remote_form_for @user do |f| %>
+      <!-- form here -->
+    <% end %>
+
+Now looks like this in Rails 3:
+
+    <%= remote_form_for(@user, :remote => true) do |f| %>
+      <!-- form here -->
+    <% end %>
+
+Essentially, AJAX forms use the same API as non-AJAX forms except for the extra `:remote => true` parameter.
+
+Not only is the API different, but their operation is, too.  Previously, a helper like `remote_form_for` would have emitted a `<form>` tag with some JavaScript attached to it.  This technique was not only bad practice by modern standards, it also tied it to one JavaScript framework unless you wanted to write a plugin to support another one, like jRails did with jQuery.  This process was annoying and, again, wasn't good practice.
+  
+So now these helpers emit HTML 5 markup with special data attributes which the framework drivers pick up on.  For example, a simple `form_for` with `:remote => true` now emits this:
+
+    <form action="/things" class="new_thing" data-remote="true" id="new_thing" method="post">
+
+The `data-remote` attribute tells the JavaScript driver that this form is an AJAX form, so it needs to attach extra behavior to it.  You can also give this option to `button_to` and the button will submit via AJAX.
+
+![Unobtrusive JavaScript](js.png)
+{.img}
+
+If you have calls to `link_to_function` or the other helpers, you'd be better served by turning those into proper JavaScript powered links, writing custom JavaScript to power links sort of like the new Rails helpers do, or downloading the aforementioned plugin to carry you over.
+
+### Building better routes
+
+As you saw in Section 3.2.1, the Rails router DSL has changed significantly, and as part of the refactoring, the Rails core team has also added a number of new features.  One of the best new router features that Rails 3 brings is optional segments; this means that you now have control over what route segments are not required to match the route (whereas before they were hardcoded names like `id`).  So, for example, let's say you had an auction site with items that are categorized in categories and subcategories.  You might have routes like this in Rails 2.x:
+
+    map.connect ':category/items', :controller => 'items', :action => 'index'
+    map.connect ':category/items/:subcategory', :controller => 'items', :action => 'index'
+    
+In Rails 3, though, you can combine those into one route:
+
+    match ':category/items(/:subcategory)', :to => 'items#index'
+
+The two sets of routes are functionally equivalent; if `:subcategory` is left out, the `params` hash will simply not have the value.  Another example of using these optional segments is the new default route in Rails 3.  The default route(s) goes from:
+
+    map.connect ':controller/:action/:id.:format'
+    map.connect ':controller/:action/:id'
+
+...to the elegant and concise form that Rails 3 has:
+
+    match '/:controller(/:action(/:id))'
+
+In this route, the `action` and `id` segments are optional; if they are not given, a default value is supplied (e.g., in the case of `action` it becomes `index`) or is `nil` (in the case of `id`).  
+
+#### Routing to Rack applications
+
+The new router is yet another example of Rails commitment to Rack.  My favorite new feature of the router is the ability to map routes to Rack endpoints other than your main application.  So, for example, if you had an extra little Sinatra*http://sinatrarb.com*{.fn} application to handle simple API calls, you would have previously had to run the app in a separate process.  This setup is nice for scalability, but it makes maintenance a pain and requires more infrastructure than necessary in most cases.
+
+In Rails 3, though, you can route directly to these extra Rack applications through the router.  Let's say you have a Rack application class named `ApiApplication`; if you wanted to route any requests to `api/*` to that application, you would write a route like the following:
+
+    YourApp::Application.routes do
+      match "/api/:action", :to => ApiApplication
+    end
+
+You could then have a Sinatra or bare Rack app that would respond to that route; this is an extremely powerful tool for building service based applications that are easily scalable.  Building it in this manner, you could easily bust the pieces of the application out on to other servers, making your application massively scalable.
+
+### Improving your model logic
+
+Models also got a nice boost in features from their refactoring; the addition of Active Relation's power opens up a wide world of possibilities.
+
+#### Better query composition
+
+A common problem for developers who build apps that use a database is programmatically composing SQL queries intelligently.  It's easy to naively slap some SQL together, but as your schema and domain get more complex, this sorts of solutions fall down.  Active Record's old API made it fairly easy to compose queries, but if you needed to apply a lot of complex logic to them, it got sticky fast.
+
+Fortunately the new API alleviates a lot of these problems.  For example, let's say you were working on a tumblog and had this `Post` model:
+  
+    # Columns in posts:
+    #   id:           integer
+    #   user_id:      integer
+    #   content:      string
+    #   title:        string
+    #   body:         text
+    #   published_at: datetime
+    #   created_at:   datetime
+    #   updated_at:   datetime
+    class Post < ActiveRecord::Base
+      belongs_to :user
+    end
+
+Let's you needed a filtering mechanism that allowed you to filter this tumblog's posts based on what the content of post was (e.g., quote, picture, text, etc.), who wrote it, and whether it has any comments.  First, you'd create a form that would pass something like the following to the controller parameters:
+
+    {
+      :filter => {
+        :content => "quote",
+        :comments => true,
+        :user_id => "1"
+      }
+    }
+
+The typical pattern in Rails 2.x would be to assemble a conditions hash based off of this then pass it back to the model to find what you need.  The problem with that is that if you need to further refine the query at all, it was difficult.  The addition of named scopes in 2.3 made this considerably easier, and since Active Relation works off the same ideas, it's even easier to add this sort of logic all the way around.
+
+So let's add a `filtered_relation` method to our model:
+
+    class Post < ActiveRecord::Base
+      belongs_to :user
+      
+      def filtered_relation(params)
+        relation = scoped
+      end
+    end
+
+So far, all our method does is return an empty `Relation` to us, which will find any record in the table.  Let's go ahead and get our test suite going:
+
+> **PROTIP:** I'm going to use a factory method here, but you should probably use your favorite fixture replacement instead if it works with Rails 3.
+    
+    class PostTest < ActiveSupport::TestCase
+      setup do
+        create_posts
+      end
+
+      test "given a blank filter, returns all records" do
+        assert_equal Post.all, Post.filtered_relation({}).all
+      end
+
+      def teardown
+        Post.delete_all
+      end
+
+      def create_posts
+        valid_attributes = {
+                            :body => "Hello.", 
+                            :title => "Hi!", 
+                            :content => "text",
+                            :user_id => 1,
+                            :published_at => Time.now
+                           }
+
+        @base = Post.create(valid_attributes)
+        @quote = Post.create(valid_attributes.merge(:content => "quote"))
+        @number2 = Post.create(valid_attributes.merge(:user_id => 2))
+        @old = Post.create(valid_attribtues.merge(:published_at => 1.year.ago))
+      end
+    end
+
+So create a basic unit test suite, add a factory method, and then test that if we give it a blank filter, it doesn't filter at all (i.e., we get all the records).  The factory method I've made here just creates a few records and sticks them in instance variables.  This setup isn't ideal, but I don't want to burden it with extra libraries and such.  The test we've written will, of course, pass since we aren't doing any filtering at all yet.
+
+OK, so let's write our first bit of filtering here.  First, let's add a test:
+
+    test "given a content filter, only gives us the filtered records" do
+      assert_equal @quote, Post.filtered_relation(:content => "quote").first
+    end
+    
+Run `rake` and the test should fail.  Next, let's edit our `filtered_relation` method to accommodate filter methods; I'm taking a dynamic approach here:
+
+    def self.filtered_relation(params)
+      relation = scoped
+  
+      params.each do |facet, value|
+        relation = send("filter_by_#{facet}", value, relation)
+      end
+  
+      relation
+    end
+    
+Now the method takes the parameters `Hash`, walks over each entry, and calls `filter_by_[the key]`.  So, if we pass it `{{:content => "quote"}}`, it will call `filter_by_content` and pass the value (`"quote"`) and the current relation.  Now we need to implement it:
+
+    def self.filter_by_content(value, relation)
+      relation.where(:content => value)
+    end
+    
+So we take the `Relation` we're given and call `where`, adding a condition that `content` needs to be the passed `value`.  Now let's write tests for the other filters:
+
+    test "given a date filter, only gives us the filtered records" do
+      assert_equal @old, Post.filtered_relation(:published_at => true).first
+    end
+
+    test "given a comments count filter, only gives us the filtered records" do
+      assert_equal @base, Post.filtered_relation(:comments => true).first
+    end
+    
+These are very similar to the previous test we wrote: given a filter set, give me the correct records.  Now we need to implement those; we'll start with the date filter:
+
+    def self.filter_by_published_at(value, relation)
+      value ? relation.where("published_at < ?", 1.month.ago) : relation
+    end
+
+So if we're given a `value` of `true`, then filter the records based on whether or not the post is from more than a month ago; if it's `false` or `nil`, then just give back the relation we received.  If you `rake`, that code's test should pass, and you should still have on failing test case.  Let's implement the comments filter:
+
+    def self.filter_by_comments(value, relation)
+      if value
+        relation.preload(:comments).\
+              select("posts.*, COUNT(comments.id) AS comment_count").\
+              from("posts, comments").having("comment_count > 0")
+      else
+        relation
+      end
+    end
+
+Let's break down this code a little.  First, we check the value and act if it's `true`, return the relation untouched if it's `false`.  Then we tell Active Record that when the query is executed, it should preload associated comments, then select our specific data (basically adding the comment count as an alias), from these tables (we have to add `comments`), and give us records having these attributes (we use having here since we're using an alias, which requires a postselect comparison).  If you `rake` now, all your tests should be passing.
+
+This is great, but the real power in this approach is being able to chain even more things on to the returned relation.  So, write some tests to make sure that works:
+
+    test "given a content and comment filter, gives us filtered records" do
+      @base.update_attribute(:content, "picture")
+      assert_equal @base, Post.filtered_relation(:content => "picture", 
+                                                 :comments => true).first
+    end
+
+    test "given a date and comment filter, gives us filtered records" do
+      @base.update_attribute(:published_at, 2.years.ago)
+      assert_equal @base, Post.filtered_relation(:published_at => true, 
+                                                 :comments => true).first
+    end
+
+    test "given a date and content filter, gives us filtered records" do
+      @base.update_attribute(:published_at, 2.years.ago)
+      @base.update_attribute(:content, "picture")
+      record = Post.filtered_relation(:published_at => true, 
+                                      :content => "picture").first
+      assert_equal @base, record
+    end
+
+You could also write some tests that check for exclusion of records from the filtered set.  So now you have some cool code to handle faceted filtering nicely.  You could do things like this now:
+
+    posts = Post.filtered_relation(:comments => true).where(:user_id => 4)\
+              .limit(3).order("id ASC")
+    
+    posts.each do |post|
+      # Do something here...
+    end
+    
+This approach is much easier and cleaner than the previous `Hash`-powered mess you would have to deal with.  I now fully expect someone reading this to create a really great plugin to make this even nicer and easier (hint hint!).
+    
+#### Cleaning up your validations
+
+Validations also received a nice little lift in Rails 3.  The old API is still around, but there is also a variation on the old one:
+
+    validates :login, :presence => true, :length => {:minimum => 4},
+              :uniqueness => true, :format => { :with => /[A-Za-z0-9]+/ }
+
+This new form is excellent since you can compress what would have previously been 4 lines of code into 1, making it dead simple to see all the validations related to a single attribute all in one place.  The valid keys/value types for this form are:
+
+* `:presence => true`
+* `:uniqueness => true`
+* `:numericality => true`
+* `:length => { :minimum => 0, maximum => 2000 }`
+* `:format => { :with => /.*/ }`
+* `:inclusion => { :in => [1,2,3] }`
+* `:exclusion => { :in => [1,2,3] }`
+* `:acceptance => true`
+* `:confirmation => true`
+
+As I mentioned previously, you can still use the old API, but it makes sense to switch to this form since, when scanning your code, you're rarely looking for what sort of validation it is rather than the attribute that's being validated.
+    
+Another great new validation feature is the ability to have a custom validation class.  It's fairly common for Rails developers to develop their own validation methods that look something like this:
+
+    def validates_has_proper_category
+      validates_each :category_id do |record, attr, value|
+        unless record.user.category_ids.include?(value)
+          record.errors.add attr, 'has bad category.'
+        end
+      end
+    end
+
+These methods are really useful, especially if you use this validation in a lot of different classes, but they often add a bit of ugly code.  Fortunately, in Rails a lot of that nastiness can go away.  Those old methods should still work, but you could make them look like this instead:
+
+    class ProperCategoryValidator < ActiveModel::EachValidator
+      def validate_each(record, attribute, value)
+        unless record.user.category_ids.include?(value)
+          record.errors.add attribute, 'has bad category.'
+        end
+      end
+    end
+
+Basically, create a class that inherits from `ActiveModel::EachValidator` and implements a `validate_each` method; inheriting from this class will make it available to all Active Record classes.  Not only is the code a bit cleaner, it also makes these validations easily testable without much hassle, and you can also integrate them into the short form validations like this:
+
+    validate :category_id, :proper_category => true
+    
+Note that the key name is taken from the class name (i.e., `ProperCategoryValidator` becomes `:proper_category`).  A similar new feature is the ability to have validator classes that bundle validations into a single object.  If you have a lot of classes that need some very complex validation logic, you can create a class like this:
+
+    class ReallyComplexValidator < ActiveModel::Validator
+      def validate(record)
+        record.errors[:base] << "This check failed!" unless thing(record)
+        record.errors[:base] << "This failed!" unless other(record)
+        record.errors[:base] << "FAIL!" unless fail(record)
+      end
+
+    private
+      def thing(record)
+        # Complex validation here...
+      end
+      
+      def other(record)
+        # Complex validation here...
+      end
+      
+      def fail(record)
+        # Complex validation here...
+      end
+    end
+    
+The API is basically to inherit from `ActiveModel::Validator` and implement a `validate` method that takes a record as its only argument.  Then in your model classes, use it like so:
+
+    class NewsPost < ActiveRecord::Base
+      validates_with ReallyComplexValidator
+    end
+
+This pattern is nice for wrapping up a lot of unruly validation code, but a more interesting variation on it will be building class factories based on parameters that build these validation classes.  You can find a little more information these and other Active Model validation features in its API documentation.*http://api.rails.info/classes/ActiveModel/Validator.html*{.fn}
+
+### Building better data classes
+
+When working with data classes other than database models (e.g., building objects based on API data for some remote service), building validation and attribute tracking logic can be a pain (especially if you end up doing it over and over again).  Rails 3 extracts much of this sort of logic from Active Record into the new Active Model module, which you can include in your own data classes.
+
+So, for example, let's say you had a data class that represented a simple microblog (e.g., Twitter) message:
+
+    class Message
+      include ActiveModel::Validations
+
+      validates_presence_of :body, :user_id
+
+      attr_accessor :body, :user_id, :posted_at
+      def initialize(body, user_id)
+        @body, @user_id = body, user_id
+      end
+    end
+    
+Now when you create these messages to be posted via some API library, you can validate their conformity to the API without a lot of extra hassle.  A few API providers have already integrated this into their gems, making it simple to make sure you're posting valid data.
+
+Active Model also provides facilities for (de)serializing objects, tracking attributes' dirty status, observers, and more.  You can read up on them on blogs*http://yehudakatz.com/2010/01/10/activemodel-make-any-ruby-object-feel-like-activerecord/*{.fn} and, of course, the API documentation.*http://api.rails.info/*{.fn}

@@ -1,0 +1,7 @@
+Title: The Rails Upgrade Handbook
+use_numbered_headers: true
+code_background_color: #dddddd
+CSS: style.css
+maruku_signature: false
+Latex preamble: src/preamble.tex
+

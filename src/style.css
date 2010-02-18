@@ -1,0 +1,115 @@
+@page { 
+  size: 9in 7in; 
+  margin: 0.75in 1in; 
+  @bottom {
+      content: counter(page);
+      text-align: right;
+      color: #666;
+      font-size: 8pt;
+      font-family: Helvetica;
+  }  
+  @top { 
+    content: string(book-title);
+    color: #666;
+    font-size: 8pt;
+    font-family: Helvetica;
+  }
+  
+  @footnotes {
+	  border-top: solid black thin;
+	  padding-top: 8pt;
+  }
+}
+
+@page:left {
+  margin-left: 1.1in;
+  
+  @bottom {
+    text-align: left;
+  }
+}
+
+@page:right {
+  margin-right: 1.1in;
+  
+  @bottom {
+    text-align: right;
+  }
+}
+
+BODY {
+  font-family: Helvetica;
+}
+
+blockquote {
+  background: #FEEFC4;
+  padding: 0.125in;
+  border: 1px solid #D9C075;
+}
+
+blockquote pre, blockquote code {
+  background: #FEEFC4;  
+}
+
+pre, code { font-family: "Courier New" !important;}
+
+pre {
+  font-size: 90%;
+  padding: 6px;
+}
+
+p code {
+  background-color: white !important;
+}
+
+p {
+  text-align: justify;
+}
+
+h1, h2, h6 {
+  page-break-before: always;
+}
+
+h1 {
+  counter-reset: page 1;
+}
+
+h1 { string-set: book-title content() }
+
+.fn {
+  float: footnote;
+  font-size: 9pt;
+}
+
+.img {
+  text-align: center;
+}
+
+.img img {
+  width: 4.55in;
+}
+
+.screenshot {
+  width: 4in;
+}
+
+.overall-table th {
+  display: none;
+}
+
+.deprecation-table th {
+  background: #eee;
+}
+
+.deprecation-table code, .deprecation-table pre {
+  background: white !important;
+}
+
+.deprecation-table td {
+  padding: 5px 0px;
+  border-bottom: 1px solid #999;
+}
+
+.deprecation-table {
+  border-spacing: 0px;
+}

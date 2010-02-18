@@ -1,0 +1,219 @@
+
+## Essentials
+
+In this section we'll look at installing the necessary components for Rails 3 and how to take the first steps toward upgrading your application.
+
+### Preliminary steps
+
+The requirements for Rails 3 are a bit more demanding that Rails 2.x in the sense that you must install newer, less common versions of many of the tools that you use everyday.
+
+#### Getting the right Ruby
+
+Rails 3 requires at least Ruby 1.8.7 or a 1.9.2 or later series of Ruby 1.9 (1.9.1 will probably work, but it is not supported due to some major bugs).  Getting one of these installed is pretty easy on most platforms.
+
+##### Mac OS X or other Unix platforms
+
+If you're on a Mac or other Unix platform, I highly recommend that you use `rvm` to manage your Ruby installations.  It leaves your system Ruby untouched and lets you effortlessly switch among different versions.  To do so, it manipulates your shell path using `bash` or `zsh` scripts; that means if you use another shell like `fish` or `csh`, then you're out of luck and will have to find another option.  If you *are* a `bash` or `zsh` user, though, then you can install install `rvm` by simply installing the gem:
+
+    gem install rvm
+
+Next, run the installation script:
+
+    rvm-install
+    
+Then, if using `bash`, it needs to be added to your profile.  You can use this little script taken from the `rvm` documentation to do that:
+
+    for profile in .bash_profile .bashrc
+      do echo 'if [[ -s "$HOME/.rvm/scripts/rvm" ]]
+      then source "$HOME/.rvm/scripts/rvm" 
+    fi' >> ~/.$profile fi
+    source ~/.rvm/scripts/rvm
+    
+And that's that.  To install another Ruby version (like 1.8.7), then you simply run `rvm install 1.8.7` then `rvm use 1.8.7`.  You can get a list of what Ruby versions you have installed with `rvm list` or switch back to your system setup using `rvm use system`.
+
+If you aren't using `bash` or `zsh`, or would simply prefer to only have one version of Ruby running, you can likely install Ruby from your package manager.  On Linux, your distribution probably has at least a 1.8.7 build available, and MacPorts has both 1.8.7 and a 1.9 build available.  If none of these options suits you, then you can always of course build from source, but that's *so* 1997.
+
+##### Windows
+
+If you're on Windows and value your sanity, you'll probably want to stick to one of the precompiled stacks; attempting to compile Ruby on Windows can be an exercise in frustration.  Ruby core provides basic binaries, but they require a lot of extra libraries and steps to get them working.  Fortunately, there are a lot of great pre-compiled, one-stop options for Windows users.  Though the de facto standard InstantRails hasn't been updated in quite some time (RubyForge says since 2007!) and the One-Click Ruby Installer is still 1.8.6, there are some new up and coming options out there that present newer stacks.  
+
+The newest community produced effort is RubyInstaller[^rubyinstaller].  It's currently still in pre-release (at time of writing, RC2), but it's available for download in a 1.8.7 or 1.9 build.  From the chatter I've heard, it works quite well and will likely replace InstantRails as the default community stack fairly soon.  There's also a company named Bitnami which produces the Bitnami RubyStack[^rubystack]; this stack is based on 1.8.7 and comes with a significant set of extra things already installed.
+
+Once you get a base Ruby installation working for you, you may want to look into `pik`, which is basically `rvm` for Windows.  To install `pik`, simply install the gem:
+
+    `gem install pik`
+    
+Then, you probably want to run `pik update` to get the latest version.  Once it's updated, you can install Ruby versions using `pik install` or add existing binary versions on your system using `pik add`.  To use one of the installed Ruby versions, simple run `pik use 1.9.1` or whatever the version identifier is.  
+
+#### Installing Rails 3
+
+Now that you have a proper Ruby, it's time to get a proper Rails.  At this point, installing the Rails 3 can be sort of tricky since there are dependencies, it's a prerelease gem, and RubyGems basically poops the bed when those two scenarios collide.  Hopefully that'll be fixed soon, but in the mean time, you can install Rails' dependencies like so:
+
+    # rails3b is a metagem for all the dependencies
+    gem install rails3b
+    gem install arel --pre
+    
+    # or if that gives you hassle, try the expanded version...
+    gem install i18n tzinfo builder memcache-client rack \
+                rack-test rack-mount erubis mail text-format thor bundler
+    
+Once all those lovely gems are installed (add `--no-ri` and `--no-rdoc` if you want to skip those/speed up your install), then install the prerelease version of Rails:
+
+    gem install rails --pre
+    
+That should install a gem named `rails 3.0.0.beta`, and if you run `rails --version`, you should see "Rails 3.0.0.beta".  Now you're ready to roll on with the Rails beta!
+
+### Automating some of the upgrade: `rails_upgrade`
+
+I'm going to show you the process of manually upgrading a Rails application, but if you're lazy like me, then you can automate part of the process with a plugin I wrote named `rails_upgrade`.  `rails_upgrade` is an officially blessed upgrade tool that will be maintained by myself and the Rails team throughout the 2.x to 3.0 transition period.[^railsupgrade]  To install the plugin, simply grab it from Github:
+
+    script/plugin install git://github.com/rails/rails\_upgrade.git
+
+The plugin adds the following Rake tasks to your application:
+
+    rake rails:upgrade:check
+    rake rails:upgrade:gems
+    rake rails:upgrade:routes     
+    rake rails:upgrade:backup
+    rake rails:upgrade:configuration
+    
+The name of each task is probably self explanatory, but here's a quick rundown of what each one is capable of.
+
+#### `rails:upgrade:check`: Find out what needs to be upgraded
+
+I've assembled a battery of tests to run on your app for obvious things that need to be upgraded and placed them into the `rails:upgrade:check`.  To get a report, simply run this in a Rails root:
+
+    rake rails:upgrade:check
+
+The task checks over some things and generates a series of warnings similar to this:
+
+    named_scope is now just scope
+    The named_scope method has been renamed to just scope.
+    More information: http://github.com/rails/...
+
+    The culprits: 
+    	- app/models/group.rb
+    	- app/models/post.rb
+
+It shows and explains the issue, where to get more information on it, and which files the issue was found in.  It checks for a wide range of issues (e.g., looks for old generators, busted plugins, environment.rb conversion requirements, old style routes and constants, etc.), so please use it since it will save you a lot of time, even if you don't use the rest of the plugin.  It doesn't cover everything 100% probably, but I've found it's great for quickly identifying some low hanging fruit in upgrading.
+
+#### `rails:upgrade:routes`: Upgrading routes
+
+There is also a task to evaluate the routes in your current `routes.rb` file and generate new code for Rails 3.  To generate a new routes file, simply run the task inside your Rails application:
+
+    rake rails:upgrade:routes
+
+I've tested it on some quite complicated routes files and it did fine, but it does have some minor quirks (i.e., it flattens `with_options` blocks currently, expanding the options into the routes rather than retaining the `with_options` block).  So, the task will take a routes file like:
+
+    ActionController::Routing::Routes.draw do |map|
+      map.resources :posts, :collection => {:drafts => :get, :published => :get}
+
+      map.login  '/login',  :controller => 'sessions', :action => 'new'
+
+      map.connect ':controller/:action/:id.:format'
+      map.connect ':controller/:action/:id'
+    end
+
+And makes a new one like this:
+
+    YourApp::Application.routes do
+      resources :posts do
+        collection do
+          get :drafts
+          get :published
+        end  
+      end
+      
+      match '/login' => 'sessions#new', :as => :login
+      match '/:controller(/:action(/:id))'
+    end
+
+The formatting isn't quite this nice when it comes straight out of the script, but you get the idea.  This task is ideal for generating a base routes file quickly that you can refactor into something more manageable.
+
+#### `rails:upgrade:gems`: Creating Gemfiles
+
+The next piece is a Gemfile generator; essentially it takes your `config.gem` directives in `environment.rb` and generates a nice `Gemfile` for the new gem bundler (see section *** for more information on that).  To run it, simply execute:
+
+    rake rails:upgrade:gems
+    
+That will take an `environment.rb` with these `config.gem` calls:
+
+    config.gem "bj"
+    config.gem "aws-s3", :lib => "aws/s3"
+    
+And generate this `Gemfile`:
+
+    directory "/path/to/rails", :glob => "{*/,}*.gemspec"
+    git "git://github.com/rails/rack.git"
+    gem "rails", "3.0.pre"
+
+    gem 'bj', 
+    gem 'aws-s3', :require_as=>"aws/s3"
+
+Then it's just as simple as `bundle install` to get your gems setup and installed (or optionally `bundle pack` if you'd like to freeze everything).  I've tested this on some fairly complex sets of gem requirements, so it should stand up to most sets of gem requirements.
+
+#### `rails:upgrade:backup`: Backing up important files
+
+Upgrading may require overwriting some files that you've probably made heavy modification to, so this task will back those files up.  If you execute the task (`rake rails:upgrade:backup`), the code will take files like `test/test_helper.rb` and create a backup in the form of `test/test_helper.rb.rails2`.  You can see a full list of what it will back up below when we actually begin the upgrade.
+
+#### `rails:upgrade:configuration`: Generating your new configuration files
+
+The last piece of the plugin is a configuration file generator.  As mentioned previously, Rails has transitioned to using Rack pretty deep in the stack.  Part of that transition has been to move from configuring your application `environment.rb` to a new file named `application.rb`, where you Rails application creates a Rack endpoint and is configured.  This task will take your Rails initializer configuration from `environment.rb` and create new configuration code that you can drop into `application.rb`.
+
+### Starting an upgrade with the plugin
+
+Now it's time to start upgrading your application.  There are three steps to starting an upgrade using the `rails_upgrade` plugin:
+
+1. Run the application check
+2. Back up your important files
+3. Re-generate the application on top of your previous application
+
+These preliminary steps followed by some guided reconfiguration and code upgrading will bring your Rails application up to version 3 compatibility, but first we need to figure out what those following steps will be.
+
+#### Run the application checks
+
+First, run `rake rails:upgrade:check`.  This will generate a report on what needs to be upgraded in your application.  You'll probably see things about deprecated API calls and changing DSL's, but don't start working on those problems yet!  The next two steps will take care of a few of the issues that it points out.  I just wanted you to run the check to layout a roadmap for where we're going.
+
+#### Back up important files
+
+In the next step, we're going to "regenerate" the Rails app on top of your current Rails 2.x app (in effect, generating a new Rails 3 app with your application code in it), but be careful which files you let the generator replace since a lot of them can be edited much more simply than they can be reconstructed (unless you really like digging around in `git diff` and previous revisions).  Fortunately for you, the `rails:upgrade:backup` task will backup anything that you probably made modifications to, but if you don't use that task, here's a list of files you probably do not want to let it update (since you likely made modifications):
+
+* `.gitignore` (unless you don't really care; the new standard one is pretty good)
+* `app/helpers/application_helper.rb`
+* `config/routes.rb`
+* `config/environment.rb`
+* `config/environments/*` (unless you haven't touched these as many people don't)
+* `config/database.yml`
+* `doc/README_FOR_APP` (you *do* write this, don't you?)
+* `test/test_helper.rb`
+
+Whether you use the plugin or not, you need to let Rails overwrite these:
+
+* `Rakefile`
+* `README`
+* `config/boot.rb`
+* `public/404.html` (unless you've customized it)
+* `public/500.html` (unless you've customized it)
+* `public/javascripts/*` (if you don't have a lot of version dependent custom JavaScript; Rails is JavaScript framework agnostic now so there have been changes and additions to the JavaScript included)
+
+Of course, these lists won't apply in every situation, but in general I think that's how it'll break down.  Now that you've generated the Rails 3 code, you can remove everything in `script/` except `script/rails`, since everything now revolves around the `rails` command (I'll get to that in more detail later).
+
+### Regenerate the application
+
+Now that your application files are prepped, you need to "generate a new app" on top of your current one (i.e., run the generator and point the app path to your current Rails 2.x app's path).  You could go in and paste or change these files manually, but doing it this way is much quicker and less error prone. 
+
+    rails ~/code/my_rails2_app/
+
+The application generator is basically the same with two key differences:
+
+* The parameter that was formerly the app name is now the app path.  You can still give it a "name," and it will create the folder like normal.  But you can also give it a full path (e.g., `~code/my_application` rather than just `my_application`) and it will create the application there.
+* All parameters for the generator must go after the app path. So, previously one could do `rails -d mysql test_app`, but now that has to be `rails test_app -d mysql`.  This change is largely due to the major refactoring of the Rails generators, so even though it's somewhat of a temporary annoyance, it's definitely worth it for the flexibility and power that the new generators bring (more on that soon).
+
+If you get an error like "no value provided for required arguments 'app\_path'", then you've gotten your parameters out of order.  If you'd like to use another database driver, you can provide `postgresql` or `sqlite` (or nothing, since `sqlite` is the default).  You'll see a lot of text scroll by, and now we have a nice, fresh Rails 3 application to play with.
+
+Note that the argument is a *path*, not a name as in previous Rails versions.  When the generator runs, it will ask you if you want to replace a lot of files.  If you've backed them up, just enter "a" it will overwrite them without asking you about each and every file.
+
+> **PROTIP:** If you got an error about your Ruby version, upgrade it!  If you use rvm (http://rvm.beginrescueend.com/) it'll be totally painless.  
+
+Congratulations, you've got a probably-not-booting-but-still-existent Rails 3 application.  Now, let's get that application booting and running!
+
