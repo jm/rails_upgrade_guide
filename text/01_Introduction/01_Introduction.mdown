@@ -13,28 +13,28 @@ Head over to [http://railsupgradehandbook.com/](http://railsupgradehandbook.com/
 
 ## Introduction
 
-Rails debuted in late 2004 and changed the way a lot of people think about web development.  Today in early 2010, we're looking at a totally new, more mature framework in Rails 3.0 that (I believe) will change the way a lot of Rails developers think about how they use it.  The new features, performance improvements, and API changes aren't incredibly drastic, but they do present great opportunities (and challenges) to those looking to upgrade existing code to the newest version.  This e-book is a look at how to go about upgrading your existing Rails app to Rails 3, how to convert common patterns to new ones, and how to improve your existing code in light of the new Rails 3 features.  First, though, we should go over some of the high-level philosophical and architectural changes that have gone on in the Rails code between versions 2 and 3.
+Rails debuted in late 2004 and changed the way a lot of people think about web development.  Today, in early 2010, we're looking at a totally new, more mature framework in Rails 3.0 that (I believe) will change the way a lot of Rails developers think about how they use it.  The new features, performance improvements, and API changes aren't incredibly drastic, but they do present great opportunities (and challenges) to those looking to upgrade existing code to the newest version.  This e-book looks at how to upgrade your existing Rails app to Rails 3, how to convert common patterns to new ones, and how to improve your existing code in light of the new Rails 3 features.  First, though, we should go over some of the high-level philosophical and architectural changes in the Rails code between versions 2 and 3.
 
 ### The Big Picture
 
-When the Merb/Rails merge was announced, some members of the Rails community were very interested to see how the final product ended up: was it going to be more of the same, something totally new, or simply Merb 2.0?  But as we're approaching a final product, we're finding out that we're getting the best of both worlds: the ease of use and packaging of Rails with the juicy technical bits of Merb.  Who can argue with that?  
+When the Merb/Rails merge was announced, some members of the Rails community were very interested to see how the final product ended up: was it going to be more of the same, something totally new, or simply Merb 2.0?  But as the final product approaches, it turns out we're getting the best of both worlds: the ease of use and packaging of Rails with the juicy technical bits of Merb.  Who can argue with that?
 
-As the team worked together towards a vision for the project, obviously changes were made to the Rails way of doing things.  These big picture changes have concentrated on a few key areas:
+As the team worked out a vision for the project, obviously changes were made to the Rails way of doing things.  These big-picture changes have concentrated on a few key areas:
 
 *   Decoupling Rails components from one another as much as possible, making things more modular and a la carte.*http://yehudakatz.com/2009/07/19/rails-3-the-great-decoupling/*{.fn}
-*   Pulling in improvements from Merb and rewrite/refactor much of the internals to improve performance.*http://www.engineyard.com/blog/2009/rails-and-merb-merge-performance-part-2-of-6/*{.fn}
-*   Exposing explicit, documented API's for common tasks and integration of wider ecosystem components from testing, ORM, etc.
+*   Pulling in improvements from Merb and rewriting/refactoring much of the internals to improve performance.*http://www.engineyard.com/blog/2009/rails-and-merb-merge-performance-part-2-of-6/*{.fn}
+*   Exposing explicit, documented API's for common tasks, and integration of wider ecosystem components from testing, ORM, etc.
 
-In order to hit these objectives, DHH, Yehuda, Josh, and the rest of the Rails team have extracted things into some new components, expanded others, and removed others to allow for agnostic integration points for things like the ORM and testing framework.    
+In order to hit these objectives, DHH, Yehuda, Josh, and the rest of the Rails team have extracted things into some new components, expanded others, and removed still others to allow for agnostic integration points for things like the ORM and testing framework.
 
 ![Overview](ecosystem.png)
 {.img}
 
-The general movement seems to be from a monolithic, one-stop shop approach to a looser ecosystem of code that works together with a straightforward set of sensible defaults.  You're no longer "locked in" to Active Record or made to use code injection and hacks and such to get your testing framework integrated.  Instead, there are hooks all over the place to cover this sort of integration that let generators generate components for the various options or helpers include different modules.  It's a great way to support the existing plugin and tool ecosystem, except this time with an established API.
+The general movement seems to be from a monolithic, one-stop shop approach to a looser ecosystem of code that works together with a straightforward set of sensible defaults.  You're no longer "locked in" to Active Record or made to use code injection and hacks and such to get your testing framework integrated.  Instead, there are integration hooks all over the place to let generators generate components for the various options, or helpers include different modules.  It's a great way to support the existing plugin and tool ecosystem, except this time with an established API.
 
 #### Lifecycle changes
 
-One of the biggest movements in the codebase has been a shift towards using simple, composed components and a lot of Rack features in the request chain rather than specialized, one-off classes.  This has affected a lot of things, but one of the major changes has been the addition of *Action Dispatch*.*http://github.com/rails/rails/blob/master/actionpack/lib/action\_dispatch.rb*{.fn}  
+One of the biggest shifts in the codebase has been toward using simple, composed components and a lot of Rack features in the request chain in place of specialized, one-off classes.  This has affected a lot of things, but one of the major changes has been the addition of *Action Dispatch*.*http://github.com/rails/rails/blob/master/actionpack/lib/action\_dispatch.rb*{.fn}  
 
 ![The request chain](lifecycle.png)
 {.img}
@@ -48,40 +48,40 @@ Action Dispatch is a "new" component in Action Pack (extracted and expanded from
 *   HTTP conditional GETs
 *   Client response and HTTP status code  
 
-Breaking this functionality out into its own component and decoupling much of it creates a much more flexible call stack for requests, meaning you can jack into the process easier with your own logic or improve the existing functionality.  I'm sure we'll see a lot of plugins taking advantage of this to create interesting middleware hacks, improve callbacks and lifecycle methods, hack in their own middlewares to handle specialized logic, or even plug in improved or application-specific routers.
+Breaking this functionality out into its own component and decoupling much of it creates a much more flexible call stack for requests.  This means you can more easily jack into the process with your own logic or improve the existing functionality.  I'm sure we'll see a lot of plugins taking advantage of this to create interesting middleware hacks, improve callbacks and lifecycle methods, hack in their own middlewares to handle specialized logic, or even plug in improved or application-specific routers.
 
 #### Making controllers flexible
 
-As a result of the changes in the request chain, the controller stack has also seen a significant overhaul.  Previously, every controller inherited from `ActionController::Base` (either directly or by inheriting from `ApplicationController`), and to slim down the call stack, one had to either (a) previous to Rails 2.3, building a smaller app with Sinatra or Rack to sit next to your main Rails application or (b) post-Rails 2.3, using Rails Metal/Rack middlewares.
+As a result of the changes in the request chain, the controller stack has also seen a significant overhaul.  Previously, every controller inherited from `ActionController::Base`, either directly or by inheriting from `ApplicationController`. If you wanted to slim down the call stack, you had to either build a smaller app with Sinatra or Rack to sit next to your main Rails application (pre-Rails 2.3) or use Rails Metal/Rack middlewares (post-Rails 2.3).
 
-In Rails 3.0, this concept of middleware plays an even more central role to how the controller hierarchy is arranged.
+In Rails 3.0, this concept of middleware plays an even more central role in the controller hierarchy.
 
 ![The new controller stack](stack.png)
 {.img}
 
-The bottom of the stack is `AbstractController`, a very low level "controller."  Rails uses this class to abstract away essentials like rendering, layouts, managing template paths, and so on, while leaving more concrete implementation details to its subclasses.  `AbstractController` exists only to provide these facilities to subclasses.  That is, you should not use this class directly; if you want something super-slim, create a subclass and implement `render` and a few other pieces).
+The bottom of the stack is `AbstractController`, a very low level "controller."  Rails uses this class to abstract away essentials like rendering, layouts, managing template paths, and so on, while leaving more concrete implementation details to its subclasses.  `AbstractController` exists only to provide these facilities to subclasses.  Thus, you should not use this class directly; if you want something super-slim, create a subclass and implement `render` and the few other pieces you need.
 
-Each subsequent jump up the hierarchy is actually a class that inherits from the previous, each including modules to compose its behavior.  So, if you want to create something slim without implementing a lot of plumbing, use the next rung on the compositional ladder: `ActionController::Metal`.  `Metal` essentially exposes super simple Rack endpoints that you can then include extra modules into to add more `ActionController` functionality.  These little classes are excellent for replacing those Rack/Sinatra apps for file uploads or what have you while still having the power to easily build out to rather rich controller objects.
+Each subsequent jump up the hierarchy is actually a class that inherits from the previous, including modules to compose its behavior.  So to create something slim without implementing a lot of plumbing, you could use the next rung on the compositional ladder: `ActionController::Metal`.  `Metal` essentially exposes super-simple Rack endpoints to which you can add more `ActionController` functionality just by including extra modules.  These little classes are excellent for replacing those Rack/Sinatra apps for file uploads or what have you, while still having the power to easily build out to rather rich controller objects.
 
 Finally, if you need the full monty (i.e., like a controller in Rails 2), then you'll need to inherit from `ActionController::Base`.  This class inherits from `ActionController::Metal` and includes a slew of modules to handle things like redirecting the user, handling implicit rendering, and a number of helpers for other stuff like caching.
 
-The advantage of taking this approach is that you can take one of the base classes like `Metal` and include your own modules to create specialized controllers.  I foresee someone using this to create a simple way to serve up resources (e.g., `PostsController < ResourcesController(:posts)` or something like that) much like people have done previously or using it as a way to quickly build API backends.  This is the other piece of the major refactor that excites me, since we're looking at a new way to construct reusable code and assemble it into usable applications.
+The advantage of this approach is that you can take one of the base classes like `Metal` and include your own modules to create specialized controllers.  I foresee someone using this to create a simple way to serve up resources (e.g., `PostsController < ResourcesController(:posts)` or something like that), much like people have done previously, or using it as a way to quickly build API backends.  This is the other piece of the major refactor that excites me, since we're looking at a new way to construct reusable code and assemble it into usable applications.
 
 #### Where models are concerned
 
-Though the public API for models is generally the same (with a few additions and changes that I'll cover in a subsequent post), Active Record is now powered by the brain-melting Active Relation, a powerful relational algebra layer.
+Though the public API for models is generally the same (with a few additions and changes I'll cover in a subsequent blog post), Active Record is now powered by the brain-melting Active Relation, a powerful relational algebra layer.
 
 ![Intelligent SQL generation](arel.png)
 {.img}
 
-What does that mean for you?  Well, basically it means that Active Record will be smarter and more powerful.  Rather than fairly naïve SQL generation, it uses some fancy mathemagical approach that should generate smarter queries.  Frankly, I haven't had a lot of time to research these features for myself, but when I do, I'll be sure to post (or if you've posted about this stuff somewhere, then by all means let me know).
+What does that mean for you?  Well, basically it means Active Record will be smarter and more powerful.  Rather than fairly naïve SQL generation, it uses some fancy mathemagical approach that should generate smarter queries.  Frankly, I haven't had a lot of time to research these features for myself, but when I do, I'll be sure to post. If you've posted about this stuff somewhere, or seen a good post explaining it, then by all means let me know.
 
 The second big change in Model Land is the extraction of much of the rich logic in Active Record objects like callbacks, validations, serialization, and so on into the Active Model module.  
 
 ![ActiveModel](amo.png)
 {.img}
 
-You can use this module to make any object behave like an Active Record object; for example, let's say you wanted to add some validations to a PORO representing a host on a network: 
+You can use this module to make any object behave like an Active Record object. For example, let's say you wanted to add some validations to a PORO (Plain Old Ruby Object) representing a host on a network: 
 
     class Host
       include ActiveModel::Validations
@@ -99,13 +99,13 @@ You can use this module to make any object behave like an Active Record object; 
     h.hostname = nil
     h.valid?    # => false
     
-To get this functionality, simply include `ActiveModel::Validations` and start implementing the methods.  It's possible to exercise fine-grained control over how the validations operate, how the validator gets the object's attributes, and so on.  To get the other functionality like observing or callbacks, just include the relevant module (e.g., `ActiveModel::Observing`) and implement the required methods.  It's fantastically clever.  
+To get this functionality, simply include `ActiveModel::Validations` and start implementing the methods.  It's possible to exercise fine-grained control over how the validations operate, how the validator gets the object's attributes, and so on.  To get other functionality, like observing or callbacks, just include the relevant module (e.g., `ActiveModel::Observing`) and implement the required methods.  It's fantastically clever.  
 
 #### Other pieces
 
-ActionMailer is also getting some love in Rails 3, and the new API is looking especially delicious.  Mailer classes are much more like a controller with some excellent helpers mixed in just for mailing rather than some weird mashup of a model and a controller.  
+ActionMailer is also getting some love in Rails 3, and the new API is looking especially delicious.  Mailer classes are much more like a controller with some excellent helpers mixed in just for mailing, rather than some weird mashup of a model and a controller.  
 
-    Awesome example goes here.
+    TODO: Awesome example goes here.
 
 No more magic `deliver_*` methods, no more weird half-DSL methods for setting things up for the e-mail, and no more wishing we had the power of controllers in mailers.
 
@@ -131,7 +131,7 @@ Rails is also getting a rather robust instrumentation framework.  In essence, an
 
 Of course, this is arbitrary, but it adds a really powerful way to respond to certain events in your application.  
 
-    Practical example with sql stuff here
+    TODO: Practical example with sql stuff here
 
 For example, someone could probably rewrite the `exception_notification` plugin*http://github.com/rails/exception\_notification*{.fn} to use the instrumentation framework to handle and send error e-mails.
 
@@ -141,21 +141,21 @@ With so much Rails 2.x code floating about, developers will need more compelling
 
 #### Performance
 
-Yehuda has remarked numerous times that one of his prime objectives in doing a lot of the refactoring has been to improve performance.  We won't see final numbers for some time (just as we won't see a final Rails release for a little while), but the general code simplification has added significantly to the performance of even the most menial of apps.
+Yehuda has said numerous times that one of his prime objectives in doing a lot of the refactoring has been to improve performance.  We won't see final numbers for some time (just as we won't see a final Rails release for a little while), but the general code simplification has added significantly to the performance of even the most menial of apps.
 
-Much of the refactoring of the Rails internals has endeavored to reduce the request call stack so that there is less code between a request entering the application and sending data to the client.  There has also been significant attention given to previously slow components such as partial rendering and URL generation.  While many of these optimizations reduce the total request time by minuscule amounts (on the order of microseconds), many of these small increases in speed paired with a few that add significant speed make the overall speed increase fairly significant.*http://www.engineyard.com/blog/2009/rails-and-merb-merge-performance-part-2-of-6/*{.fn}  
+Much of the refactoring of Rails internals has endeavored to reduce the request call stack so that there is less code between a request entering the application and data being sent back to the client.  Significant attention has been given to previously slow components, such as partial rendering and URL generation.  While many of these optimizations reduce the total request time by minuscule amounts (on the order of microseconds), pairing lots of these small speedups with a few that add significant speed make the overall speed increase fairly substantial.*http://www.engineyard.com/blog/2009/rails-and-merb-merge-performance-part-2-of-6/*{.fn}  
 
 #### New features
 
-Many of the newly added features are not only "new and shiny", they could also greatly aid in cleaning up or actively improving your current codebase.  The new routing DSL helps tame unruly routes files, and the new Active Record API can help in areas where programmatic composition of queries is necessary (e.g., building faceted filters).  The new `Responder` cleans up and abstracts much of the common logic in RESTful controllers; Active Model can replace many of the hacks and extra libraries that developers use for object validation and relation.  Not to mention the minor conveniences like automatic output escaping and XSS protection.  In short, the new features add a lot of power to the framework and give you the ability to reduce your code maintenance.
+Many of the newly added features are not only "new and shiny", they could also greatly aid in cleaning up or actively improving your current codebase.  The new routing DSL helps tame unruly routes files, and the new Active Record API can help in areas where programmatic composition of queries is necessary (e.g., building faceted filters).  The new `Responder` cleans up and abstracts much of the common logic in RESTful controllers. Active Model can replace many of the hacks and extra libraries that developers use for object validation and relation.  And that's besides the minor conveniences, like automatic output escaping and XSS protection.  In short, the new features add a lot of power to the framework and give you the ability to reduce your code maintenance effort.
 
-It's easy to say that you can continue on without these features, but it might serve you well to figure out how many hours (and in turn, how much money) you're wasting maintaining that gnarly routes file or debugging and updating those data class validation methods?  How sure are you that your app's output is totally covered with XSS protection?  The attraction of new features in terms of upgrading from one version of a tool to another isn't always simply "oh that's new and I want to play with it"; often times the attraction is the new power and freedom afforded to developers.
+It's easy to say you can continue on without these features, but it might serve you well to figure out how many hours (and in turn, how much money) you're wasting maintaining that gnarly routes file or debugging and updating those data class validation methods.  How sure are you that your app's output is totally covered with XSS protection?  The attraction to upgrade to a new version of a tool isn't simply, "Oh, that feature's new and I want to play with it."  Often the attraction is the new power, freedom, and security the new features afford to developers.
 
 #### Easier segmentation
 
-Lastly, segmenting a big app into smaller mountable apps has never been easier.  With the addition of Rails Metal in Rails 2.3 developers were given a taste of deep Rack integration with Rails, but in Rails 3, Rack is a first-class citizen.  As mentioned previously, Rack is now an integral part of the Rails request stack making it a cinch use it in a much more meaningful way.
+Lastly, segmenting a big app into smaller mountable apps has never been easier.  With the addition of Rails Metal in Rails 2.3, developers were given a taste of deep Rack integration with Rails, but in Rails 3, Rack is a first-class citizen.  Since Rack is now an integral part of the Rails request stack, it's a cinch to use it in a much more meaningful way.
 
-No longer do you have to maintain that separate Merb or Sinatra application just for that simple, one-off task; now you can integrate that directly with your Rails app.  Doing so will reduce your codebase dissonance since everything is in Rails, cut down on integration issues, and, very likely, reduce the amount of hardware you'll need sitting under your application.
+No longer do you have to maintain a separate Merb or Sinatra application just for that simple, one-off task; now you can integrate that directly with your Rails app.  Doing so will reduce your codebase dissonance (since everything is in Rails), cut down on integration issues, and, very likely, reduce the amount of hardware you'll need sitting under your application.
 
 Now that we've taken a mile-high view of the changes and the upgrade landscape, let's dig in a little bit further.
 
