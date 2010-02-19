@@ -33,6 +33,16 @@ Now open up `application.rb`. If you generated the files using the Rails 3 gener
 
 For the most part, all the code inside the Rails initializer block from your old `environment.rb` (i.e., all your `config.*` calls) should transfer straight over: just use the `rails:upgrade:configuration` method or copy and paste them inside the class body.  That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend  you move it either into an initializer or to the bottom of `application.rb`.
 
+> **PROTIP:** TODO : RAILS_GEM_VERSION = '2.3.2'
+
+TODO : Section on config syntax that's changed, like this:
+
+    config.time_zone = 'Central Time (US & Canada)'
+    config.active_record.default_timezone = :cst
+
+and `after_initialize`-type stuff TODO TODO
+
+
 Next, take a look at some of the newly generated code.  You'll notice a block like this:
 
     config.generators do |g|
@@ -49,7 +59,7 @@ The `config/application.rb` file also houses some configuration for other things
 * You may want to set a default timezone.  I usually stick with UTC, since it's easy to convert on a per-user basis to their desired timezone, but you might want to set it to your timezone or the server's timezone.
 * Your favorite old haunts from `config/environment.rb` such as `config.plugins`, `config.load_paths`, etc., are still there (even though `config.gems` is not).
 
-Many of the other configuration bits that were once in `environment.rb`, like custom inflections, mime types, and so on, have been moved out into their own initializers in the `config/initializers` directory. You'll probably want to/have to move these things out of `application.rb` and into the proper initializer.  
+Many of the other configuration bits that were once in `environment.rb`, like custom inflections, mime types, and so on, have been moved out into their own initializers in the `config/initializers` directory. You'll probably want to/have to move these things out of `application.rb` and into the proper initializer.   TODO : Make this clearer to the slow learners in class.
 
 If you opted to keep any custom initializers or specialized environment files during the generation process, you'll probably need to go in there and update the syntax.  Many of these (especially the environment files like `config/environments/production.rb`) now require a new block syntax:
 

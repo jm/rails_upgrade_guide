@@ -51,7 +51,6 @@ Now that you have a proper Ruby, it's time to get a proper Rails.  At this point
 
     # rails3b is a metagem for all the dependencies
     gem install rails3b
-    gem install arel --pre
     
     # or if that gives you hassle, try the expanded version...
     gem install i18n tzinfo builder memcache-client rack \
@@ -67,7 +66,7 @@ That should install a gem named `rails 3.0.0.beta`, and if you run `rails --vers
 
 I'm going to show you the process of manually upgrading a Rails application, but if you're lazy like me, then you can automate part of the process with a plugin I wrote named `rails_upgrade`.  `rails_upgrade` is an officially blessed upgrade tool that I and the Rails team will maintain throughout the 2.x to 3.0 transition period.[^railsupgrade]  To install the plugin, simply grab it from Github:
 
-    script/plugin install git://github.com/rails/rails\_upgrade.git
+    script/plugin install git://github.com/rails/rails_upgrade.git
 
 The plugin adds the following Rake tasks to your application:
 
@@ -81,11 +80,11 @@ The name of each task is probably self-explanatory, but here's a quick rundown o
 
 #### `rails:upgrade:check`: Find out what needs to be upgraded
 
-I've assembled a battery of tests to run on your app for obvious things that need to be upgraded and placed them into the `rails:upgrade:check`.  To get a report, simply run this in a Rails root:
+This task runs a battery of tests on your app for obvious things that need upgrading.  To get a report, simply run this in a Rails root:
 
     rake rails:upgrade:check
 
-The task checks over some things and generates a series of warnings similar to this:
+Depending on what it finds, the task generates a series of warnings similar to this:
 
     named_scope is now just scope
     The named_scope method has been renamed to just scope.
@@ -95,7 +94,7 @@ The task checks over some things and generates a series of warnings similar to t
     	- app/models/group.rb
     	- app/models/post.rb
 
-It shows and explains the issue, where to get more information on it, and in which files the issue was found.  It checks for a wide range of issues (e.g., old generators, busted plugins, environment.rb conversion requirements, old style routes and constants, etc.), so please use it even if you don't use the rest of the plugin; it will save you a lot of time.  It doesn't cover everything 100%, but I've found it's great for quickly identifying juicy, low-hanging upgrade fruit.
+It explains the issue, where to get more information on it, and in which files the issue was found.  It checks for a wide range of issues (e.g., old generators, busted plugins, environment.rb conversion requirements, old style routes and constants, etc.), so at least run this task, even if you don't use the rest of the plugin; it will save you a lot of time.  It doesn't cover everything 100%, but I've found it's great for quickly identifying juicy, low-hanging upgrade fruit.
 
 #### `rails:upgrade:routes`: Upgrading routes
 
@@ -212,6 +211,8 @@ The application generator is basically the same with two key differences:
 
 * The parameter that was formerly the app name is now the app path.  You can still give it a "name," and it will create the folder like normal.  But you can also give it a full path (e.g., `~code/my_application` rather than just `my_application`) and it will create the application there.
 * All parameters for the generator must go after the app path. So, previously one could do `rails -d mysql test_app`, but now that has to be `rails test_app -d mysql`.  This change is largely due to the major refactoring of the Rails generators. So even though it's somewhat of a temporary annoyance, it's definitely worth it for the flexibility and power the new generators bring (more on that soon).
+
+> **PROTIP:** TODO : Note about specifying -d mysql when regenerating app
 
 If you get an error like "no value provided for required arguments 'app\_path'", then you've gotten your parameters out of order.  If you'd like to use another database driver, you can provide `postgresql` or `sqlite` (or nothing, since `sqlite` is the default).  You'll see a lot of text scroll by, and now we have a nice, fresh Rails 3 application to play with.
 
