@@ -14,6 +14,7 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &#10063;&nbsp;&nbsp;&nbsp; | `AC::Dispatcher.before_dispatch` is deprecated. | Please use `ActionDispatch::Callbacks.before` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `AC::Dispatcher.to_prepare` is deprecated. | Please use `config.to_prepare` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | Creating new `AC::Dispatcher` objects is deprecated. | Create/interact with the `Rails::Application` object instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `config.gem` is deprecated. | Use a `Gemfile` with `bundler`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `config.action_controller.`<br />`consider_all_requests_local` is deprecated. | Use `Rails.application.`<br />`config.consider_all_requests_local`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `config.action_controller.`<br />`allow_concurrency` is deprecated. | Use `Rails.application.`<br />`config.allow_concurrency` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `benchmark(:level)` has been deprecated. | Use `benchmark("message", :level => level)` instead. |
@@ -49,6 +50,9 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 
 &nbsp; | Deprecation | How to fix it
 -----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | Providing hash arguments to finder methods such as `find`, `first`, and `all` is deprecated. | Use `where` or other appropriate Active Record method. |
+&#10063;&nbsp;&nbsp;&nbsp; | Providing hash arguments to calculation methods such as `count`, `sum`, `average`, `calculate`, `maximum`, and `minimum` has been deprecated. | Chain these methods with `where` and other appropriate Active Record methods. |
+&#10063;&nbsp;&nbsp;&nbsp; | Providing hash arguments to `update_all` or `delete_all` is deprecated. | Use the appropriate Active Record methods to compose the query instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `named_scope` is deprecated. | Change to `scope`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `Model.human_name` is deprecated. | Use `Model.model_name.human`. |
 &#10063;&nbsp;&nbsp;&nbsp; | Adding callback methods named `after_save`, `after_create`, etc. is deprecated. | Create a method then call `after_save :method_name` (or whatever callback). |
@@ -64,6 +68,8 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 
 &nbsp; | Deprecation | How to fix it
 -----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | `link_to_function` and `button_to_function` are gone. | Use standard JavaScript and HTML to build these links and buttons. |
+&#10063;&nbsp;&nbsp;&nbsp; | `remote_form_for` and `link_to_remote` are deprecated. | Use standard `form_for` and `link_to` with the `:remote => true` option. |
 &#10063;&nbsp;&nbsp;&nbsp; | `error_message_on` takes an option hash instead of separate arguments. | Pass an options hash with `:prepend_text`, `:append_text`, and `:css_class` keys. |
 &#10063;&nbsp;&nbsp;&nbsp; | `number_with_delimiter` takes an options hash instead of arguments. |  Pass a hash with `:delimiter` and `:precision` keys. |
 &#10063;&nbsp;&nbsp;&nbsp; | `number_with_precision` takes an options hash rather than an argument. | Pass an options hash with a `:precision` key. |
@@ -99,6 +105,12 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 
 &nbsp; | Deprecation | How to fix it
 -----|-------------------|--------------:
+&#10063;&nbsp;&nbsp;&nbsp; | `recipients` is deprecated. | Provide a `:to` option to the new `mail` method. |
+&#10063;&nbsp;&nbsp;&nbsp; | `from` is deprecated. | Provide a `:form` option to the new `mail` method. |
+&#10063;&nbsp;&nbsp;&nbsp; | `subject` is deprecated. | Provide a `:subject` option to the new `mail` method. |
+&#10063;&nbsp;&nbsp;&nbsp; | `body` is deprecated. | Use instance variable (like a controller) |
+&#10063;&nbsp;&nbsp;&nbsp; | Setting `:body` variables has been deprecated. | Use normal instance variables (like a controller) |
+&#10063;&nbsp;&nbsp;&nbsp; | `attachment` is deprecated. | Place attachments' data keyed to their filename in the `attachments` `Hash`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `default_charset` is deprecated. | Change it to `default :charset => value`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `default_content_type` is deprecated. | Change it to `default :content_type => value`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `default_mime_version` is deprecated. | Change it to `default :mime_version => value`. |
@@ -107,7 +119,6 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &#10063;&nbsp;&nbsp;&nbsp; | Setting `template_root=` | Use `prepend_view_path` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | Delivering mail with `deliver_*` | Use the `deliver` on the mailer instance instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | Creating a mail message with `create_*` | Call the mailer method and call `to_s` on the returned mail object |
-&#10063;&nbsp;&nbsp;&nbsp; | Setting `:body` variables | Use normal instance variables (like a controller) |
 &#10063;&nbsp;&nbsp;&nbsp; | `render_message` on `Message` is deprecated. | Use `render` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `set_content_type` on `Message` is deprecated. | Use `content_type` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `transfer_encoding` on `Message` is deprecated. | Use `content_transfer_encoding` instead. |

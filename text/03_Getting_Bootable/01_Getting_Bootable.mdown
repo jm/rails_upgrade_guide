@@ -89,16 +89,14 @@ This connects the path "http://example.com/posts/mine" to the `index` action on 
     
     match '/posts/mine', :to => 'posts#index'
 
-> **PROTIP**: TODO TODO TODO 	The next example here (/mine) is a little confusing.  First, you had been talking about a /posts/mine route, and you switch to a /mine route (but still to the PostsController).  It's not immediately clear to me whether this is an oversight/typo, or an intentional switch to a different route, because the example seems focused on how to add a type, not how to route a shortcut route to a regular controller. Also, the language doesn't make it entirely clear that this is still following the "here's the Rails 2 route, followed by the equivalent Rails 3 route" format, because the last sentence on p. 36 says you'd "just follow the same pattern as in Rails 2.x", which sorta-kinda suggests that, for routes needing to specify extra params, you revert back to map.connect.  The fact that you follow up with a Rails 3 route makes that interpretation impossible, but it seems to stumble here for me.  I'd suggest the last sentence on p. 36 something like this:  "In Rails 2, you provide extra parameters like this:" and then the map.connect route, then "The same route in Rails 3 looks very similar:"
-	
-If you wanted to provide extra parameters, you would simply follow the same pattern as in Rails 2.x:
+If you wanted to provide extra parameters to the route (for example, a default value for a parameter or an extra parameter to an action that expects it from other routes), you do this in Rails 2.x:
 
-    map.connect '/mine', :controller => 'posts', :action => 'index', 
-                         :type => 'mine'
+    map.connect '/by_date', :controller => 'pictures', :action => 'index', 
+                         :sort => 'date'
 
-Notice in the following Rails 3 route that adding a default parameter looks very similar:
+Notice in the following Rails 3 route that adding a default parameter looks very similar (i.e., simply add them as hash arguments to the end of the route definition):
 
-    match '/mine', :to => 'posts#index', :type => 'mine'
+    match '/by_date', :to => 'pictures#index', :type => 'date'
 
 The syntax for named routes (i.e., routes that generate a helper like `posts_path`) is also significantly different. A named route in Rails 2.x looks something like this:
 
@@ -108,9 +106,7 @@ This route generates helper methods named `login_path` and `login_url` and conne
     
     match '/login', :to => 'sessions#new', :as => 'login'
     
-Note that the method called remains the same (unlike in Rails 2.x), but we add an `:as` parameter to indicate what the route is named.
-
-TODO : It's unclear to me what you mean here by "the method called remains the same", or, whatever that means, how it differs from Rails 2.x.  I feel like I'm missing something.
+Note that, unlike in Rails 2.x, the method called to define the route remains the same (`match`), but we add an `:as` parameter to indicate what the route is named.
 
 Resource routes have seen a significant shift also.  Previously, specifying special methods for the collection and members of the collection of resources required a sticky-looking set of hashes:
 
@@ -154,7 +150,7 @@ The `:requirements` argument specifies what parameter to check and a pattern to 
     match '/people/participants/:participant_id', :to => 'participants#show', 
           :constraints => { :participant_id => /^[a-z]{2}\d+/i}
 
-So, essentially the `requirements` argument is now the `constraints` argument, but it's not exactly the same: Rails 3 makes the constraints/requirements mechanism much more robust.  You can read about some of the new features in Section 4.3.   TODO: when I build the HTML, it appears to be numbering the chapters slightly differently. Does this Section number need to auto-update to point to the right place?
+So, essentially the `requirements` argument is now the `constraints` argument, but it's not exactly the same: Rails 3 makes the constraints/requirements mechanism much more robust.  You can read about some of the new features in Section 5.3.
 
 #### Setting up the gem bundler
 
@@ -172,9 +168,11 @@ So we want the `aws-s3` gem, version `0.5.1`, from a custom source, and it must 
     source "http://gems.omgbloglol.com"
     gem "aws-s3", "0.5.1", :require => "aws/s3"
 
-So `:source` parameters become `source` calls *before* the gem that you want to fetch.
+So `:source` parameters become `source` calls *before* the gem that you want to fetch; this call adds the source given to a list of sources to search for gems that we need to install.
 
 > **PROTIP:** Sources don't have to be added immediately before the gem, but do have to be added before that particular gem requirement.
+
+Sources resolve in order of addition, so you probably want to keep Gemcutter first, unless you need a specialized version of a gem that's on Gemcutter from a secondary source.
 
 The version is now simply the second string requirement; if this is left out (i.e., you simply had `gem "aws-s3", :require => "aws/s3"`), it will assume you want the latest version.  And finally, the `:lib` argument is now `:require` (which makes more sense).  So, to sum up the changes:
 
@@ -182,8 +180,6 @@ The version is now simply the second string requirement; if this is left out (i.
 * `:lib` key becomes the `:require` key
 * The `:version` key becomes a second, optional string argument
 * Move `:source` arguments to a `source` call to add it to the sources
-
-TODO : Question: Does the most recent 'source' call apply, or do they add to a collection of sources from which the require attempts to pull the gem? If it's a collection, is there any significance to the order in which the 'source' calls appear in the source?  Does it work from most-recent to oldest, or from first to last, or random or what?  If I have two (or more) 'source' calls in the Gemfile, and they both have (different) versions of a gem I'm requiring later, but only the second source has the right one, will it get it, or will it pull it from the first one and destroy my life?
 
 Now let's take a look at the `Gemfile` that Rails generated for you:
 
@@ -221,25 +217,7 @@ As mentioned before, `bundler` is much more powerful than `config.gem`, and one 
     
     gem "mocha", :group => :test
     
-Now this gem will only be added in when running the app in the `testing` environment.  This technique is also useful for production only gems related to caching and what not.
-
-TODO : Question - Did you mean the `test` environment?  If I did
-
-    group :wilbur do
-      gem "badwilbur"
-    end
-
-but didn't have a 'wilbur' environment, it would never get loaded at all, right?
-
-Likewise, if I just want `bullet` in `development` mode, I would do
-
-    group :development
-      gem "bullet"
-    end
-
-So that these "group" names typically would be chosen to correspond to the normal test/development/production/staging environments in which we run apps?  Or do they have another significance, and the choice of :test for the `test` environment is accidental and still has to be specified somewhere else?
-TODO (end)
-TODO (end)
+Now this gem will only be added in when running the app in the `test` environment.  This technique is also useful for production only gems related to caching and what not, or for specifying special gems for your development environment, such as debuggers and log analyzers.
 
 Now that you've got a proper `Gemfile`, run `bundle pack` if you want to vendor everything or `bundle install` to install the gems to system gems.  The `bundler` is much more powerful than `config.gem`, and it helps you do more advanced tasks (e.g., bundle directly from a Git repository, as you can see in the generated `Gemfile`, specify granular paths, etc.).  So, once you move your `config.gem` calls over, you may want to look into the new features*http://github.com/carlhuda/bundler/blob/master/README.markdown*{.fn}.
 
@@ -304,9 +282,7 @@ Much cleaner and closer to what we're used to.  Instance variables are carried o
     
     UserMailer.new_friend_notification(user, new_friend).deliver
     
-If you wanted the message as a string, you simply call `to_s` on the object returned from the mailer method rather than calling `create_*`.
-
-TODO : `create_*`?  Where's that?  Did you mean "rather than calling `deliver`" ?
+If you wanted the message as a string, you simply call `to_s` on the object returned from the mailer method rather than calling the magical `create_*` method that the old Action Mailer had for getting a string version of a message.
 
 The handling of attachments is a bit cleaner also.  Previously, a mailer with attachments would look like this:
 
@@ -338,7 +314,11 @@ Not terrible, but the `:body` parameter is awkward since it's not really a "body
       end
     end
 
-Simply populate the attachments hash with your attachment data and ActionMailer takes care of the rest.  Once you get the syntax converted, move your mailers from `app/models` to `app/mailers` and you should be good to go.
+Simply populate the attachments hash with your attachment data and ActionMailer takes care of the rest.  
+
+**TODO: Put something in here about the respond\_to-like multipart support**
+
+Once you get the syntax converted, move your mailers from `app/models` to `app/mailers` and you should be good to go.
 
 #### New Active Record API
 
@@ -369,7 +349,20 @@ Just like a `named_scope`, these `Relation` objects chain up with each other and
 
 As you'll see in Section 4.4, this new syntax opens up a lot of possibilities that either weren't possible or were quite ugly with the old API.
 
-Now, let's take a look at converting some typical Rails 2.x model code into the new syntax.  Not every piece of the API is changing; in fact, much of the large-scale ideas are staying the same. Calls like `Model.find(:all)`, `Model.find(:first)`, and `Model.find_by_field` will still work. It's mostly the code surrounding the actual composition of the SQL query that is changing: essentially you can't provide argument hashes for anything anymore ( TODO : This is confusing, and I don't know how to fix it.  What you can't do is provide hash args for :conditions, :limit, etc.  But you still provide hashes for the arguments to where(), for instance. TODO ).  For example, here's a simple query in Rails 2:
+Now, let's take a look at converting some typical Rails 2.x model code into the new syntax.  Not every piece of the API is changing; in fact, much of the large-scale ideas are staying the same. Calls like `Model.find(:all)`, `Model.find(:first)`, and `Model.find_by_field` will still work. It's mostly the code surrounding the actual composition of the SQL query that is changing: essentially you can't provide argument hashes for any of the finder and calculation methods anymore.  In other words, these methods no longer take hash arguments:
+
+* `find`
+* `first`
+* `all`
+* `count`
+* `calculate`
+* `sum`
+* `average`
+* `maximum`
+* `minimum`
+* `update_all`
+
+Active Record provides a new query interface for providing conditions and other parameters to these methods.  For example, here's a simple query in Rails 2:
 
     Post.find(:all, :conditions => {:category_id => @category.id})
 

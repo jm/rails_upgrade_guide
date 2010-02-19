@@ -1,4 +1,18 @@
 
 ## Case Studies
 
+Now that we've looked at some of the steps involved with upgrading a Rails application to Rails 3 and some ideas for improving your code using the new features, let's take a look at some practice case studies in upgrading.  Each of these either has a fork on my Github (http://github.com/jm) that you can follow along with or will have a Github URL to point to their head repository where others have put the work in to upgrade them.
+
+### Application Case Study: RubyURL
+
+#### Getting the application bootable
+
+#### And...
+
 ### Application Case Study: Jamis Buck's Bucketwise
+
+#### Getting the application bootable
+
+#### First issues: 
+
+#### The case of the missing helpers

@@ -112,13 +112,11 @@ The new API for the pieces that still exist in their previous forms has changed.
 
 Now looks like this in Rails 3:
 
-    <%= remote_form_for(@user, :remote => true) do |f| %>
+    <%= form_for(@user, :remote => true) do |f| %>
       <!-- form here -->
     <% end %>
 
 Essentially, AJAX forms use the same API as non-AJAX forms except for the extra `:remote => true` parameter.
-
-TODO : Wait, should the second code example be `form_for(@user, :remote => true)` ? TODO
 
 Not only is the API different, but its operation is, too.  Previously, a helper like `remote_form_for` would have emitted a `<form>` tag with some JavaScript attached to it.  This technique was not only bad practice by modern standards, it also tied it to one JavaScript framework unless you wanted to write a plugin to support another one, like jRails did with jQuery.  This process was annoying and, again, wasn't good practice.
   
@@ -410,11 +408,21 @@ The API is basically to inherit from `ActiveModel::Validator` and implement a `v
 
 This pattern is nice for wrapping up a lot of unruly validation code, but a more interesting variation on it will be building class factories based on parameters that build these validation classes.  You can find a little more information these and other Active Model validation features in its API documentation.*http://api.rails.info/classes/ActiveModel/Validator.html*{.fn}
 
+#### Using Active Relation to the max
+
+Action Relation relations can also be used to great effect for other purposes.  
+
+**TODO Example of composing and using relations directly**
+
+#### Caching and relations
+
+One of the smartest uses of the `Relation` objects is to alleviate your caching burden.  Normally in a Rails application, you want to cache three things: template rendering, sticky controller logic, and database query results.  
+
 ### Building better data classes
 
-When working with data classes other than database models (e.g., building objects based on API data for some remote service), building validation and attribute tracking logic can be a pain (especially if you end up doing it over and over again).  Rails 3 extracts much of this sort of logic from Active Record into the new Active Model module (TODO : is this actually the ActiveModel::Validations module?  Or are you just using a subset of the capability to which you're referring here in the example? TODO ), which you can include in your own data classes.
+When working with data classes other than database models (e.g., building objects based on API data for some remote service), building validation and attribute tracking logic can be a pain (especially if you end up doing it over and over again).  Rails 3 extracts much of this kind of logic from Active Record into the new Active Model module, which you can include in your own data classes.
 
-So, for example, let's say you had a data class that represented a simple microblog (e.g., Twitter) message:
+So, for example, let's say you had a data class that represented a simple microblog (e.g., Twitter) message; if you needed some validation logic, you could simply include the `ActiveModel::Validations` module:
 
     class Message
       include ActiveModel::Validations
@@ -428,5 +436,7 @@ So, for example, let's say you had a data class that represented a simple microb
     end
     
 Now when you create these messages to be posted via some API library, you can validate their conformity to the API without a lot of extra hassle.  A few API providers have already integrated this into their gems, making it simple to make sure you're posting valid data.
+
+**TODO: Examples of other functionality**
 
 Active Model also provides facilities for (de)serializing objects, tracking attributes' dirty status, observers, and more.  You can read up on them on blogs*http://yehudakatz.com/2010/01/10/activemodel-make-any-ruby-object-feel-like-activerecord/*{.fn} and, of course, the API documentation.*http://api.rails.info/*{.fn}

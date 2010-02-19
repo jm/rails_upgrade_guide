@@ -1,4 +1,6 @@
 
 ### Plugin Case Study: `restful_authentication`
 
-### Plugin Case Study: 
+### Plugin Case Study: `will_paginate`
+
+### Plugin Case Study: `paperclip`

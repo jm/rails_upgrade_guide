@@ -39,4 +39,5 @@ This checklist should give you a general guide to upgrade to Rails 3.
 -----|-------------------|
 &#10063;&nbsp;&nbsp;&nbsp; | Run tests, fix deprecation and other errors |
 &#10063;&nbsp;&nbsp;&nbsp; | Boot with `rails server` |
+&#10063;&nbsp;&nbsp;&nbsp; | Monkey click and verify things are *actually* working. |
 {.overall-table}
