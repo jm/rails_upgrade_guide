@@ -106,7 +106,7 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &nbsp; | Deprecation | How to fix it
 -----|-------------------|--------------:
 &#10063;&nbsp;&nbsp;&nbsp; | `recipients` is deprecated. | Provide a `:to` option to the new `mail` method. |
-&#10063;&nbsp;&nbsp;&nbsp; | `from` is deprecated. | Provide a `:form` option to the new `mail` method. |
+&#10063;&nbsp;&nbsp;&nbsp; | `from` is deprecated. | Provide a `:from` option to the new `mail` method. |
 &#10063;&nbsp;&nbsp;&nbsp; | `subject` is deprecated. | Provide a `:subject` option to the new `mail` method. |
 &#10063;&nbsp;&nbsp;&nbsp; | `body` is deprecated. | Use instance variable (like a controller) |
 &#10063;&nbsp;&nbsp;&nbsp; | Setting `:body` variables has been deprecated. | Use normal instance variables (like a controller) |
