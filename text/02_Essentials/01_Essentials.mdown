@@ -212,7 +212,7 @@ The application generator is basically the same with two key differences:
 * The parameter that was formerly the app name is now the app path.  You can still give it a "name," and it will create the folder like normal.  But you can also give it a full path (e.g., `~code/my_application` rather than just `my_application`) and it will create the application there.
 * All parameters for the generator must go after the app path. So, previously one could do `rails -d mysql test_app`, but now that has to be `rails test_app -d mysql`.  This change is largely due to the major refactoring of the Rails generators. So even though it's somewhat of a temporary annoyance, it's definitely worth it for the flexibility and power the new generators bring (more on that soon).
 
-> **PROTIP:** TODO : Note about specifying -d mysql when regenerating app
+> **PROTIP:** Be sure to specify the right database adapter when regenerating the application; it will place the proper gem requirement for you in the `Gemfile` if you do.
 
 If you get an error like "no value provided for required arguments 'app\_path'", then you've gotten your parameters out of order.  If you'd like to use another database driver, you can provide `postgresql` or `sqlite` (or nothing, since `sqlite` is the default).  You'll see a lot of text scroll by, and now we have a nice, fresh Rails 3 application to play with.
 
