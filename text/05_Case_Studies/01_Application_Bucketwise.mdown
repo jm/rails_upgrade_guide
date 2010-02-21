@@ -3,15 +3,157 @@
 
 Now that we've looked at some of the steps involved with upgrading a Rails application to Rails 3 and some ideas for improving your code using the new features, let's take a look at some practice case studies in upgrading.  Each of these either has a fork on my Github (http://github.com/jm) that you can follow along with or will have a Github URL to point to their head repository where others have put the work in to upgrade them.
 
-### Application Case Study: RubyURL
+### Application Case Study: Perwikity
 
-#### Getting the application bootable
+Last year sometime I wrote a small wiki system named Perwikity*http://github.com/jm/perwikity*{.fn}.  It was developed primarily to eventually (hopefully) be used as the official Rails wiki, but the wiki eventually became powered by the awesome DokuWiki rather than a dogfooded solution.  It runs on Rails 2.3 and is backed by the database along with a Git repository for versioning; grab the application from my Github and follow the install instructions.  
 
-#### And...
+First, install `rails_upgrade` and run the `rails:upgrade:check` task to get an inventory of what's in need of upgrading:
+
+    Old gem bundling (config.gems)
+    The old way of bundling is gone now.  You need a Gemfile for bundler.
+    More information: http://omgbloglol.com/post...
+
+    Old Rails generator API
+    A plugin in the app is using the old generator API (a new one may be 
+    available at http://github.com/trydionel/rails3-generators).
+    More information: http://blog.plataformatec.com.br...
+
+    Known broken plugins
+    At least one plugin in your app is broken (according to the wiki).  
+    Most of project maintainers are rapidly working towards compatability, 
+    but do be aware you may encounter issues.
+    More information: http://wiki.rubyonrails.org...
+
+    Old router API
+    The router API has totally changed.
+    More information: http://yehudakatz.com...
+
+    Deprecated test_help path
+    You now must require 'rails/test_help' not just 'test_help'.
+    More information: http://weblog.rubyonrails.org...
+
+    New file needed: config/application.rb
+    You need to add a config/application.rb.
+    More information: http://omgbloglol.com/post...
+    
+As you can see, it didn't fail *every* check (no mailers!), but there is significant work to be done.  Run `rake rails:upgrade:backup` and regenerate the application (`rails .`).
+
+#### Getting to bootable
+
+Running any task or command related to the app will cause it to spew various errors about missing files and gems to be required, so the first step is to add our gems to the `Gemfile`.  I didn't use `config.gem` here because it didn't work well, but since Bundler manages all gem imports in Rails 3, we'll need to make sure they're in the `Gemfile`.  We know we'll need `grit`*http://github.com/mojombo/grit*{.fn} to interface with Git and `RedCloth` to handle the Textile rendering (you can use `bluecloth` or something else; check the app's `README` for more information).  We'll also need `will_paginate`, but we'll need the `3.0.pre` version of it for Rails 3 compatibility.  So, add them to the `Gemfile`:
+
+    gem 'grit'
+    gem 'RedCloth'
+    gem 'will_paginate', '3.0.pre'
+
+Adding those should take away the errors related to gem requirements, but now you'll probably encounter an error like this:
+
+    /Library/Ruby/Gems/1.8/gems/activerecord-3.0.0.beta/lib/
+    active_record/base.rb:1300:
+    in `method_missing': undefined method `evaluate_attribute_method' 
+    for #<Class:0x1037406e0> (NoMethodError)
+
+This error comes from inside `acts_like_git` where the attributes to version are configured (`lib/acts_like_git/active_record_ext/base.rb`, around line 33):
+
+    self.git_settings.versioned_fields.each do |column|
+      git_read_method = "def #{column}(reload = true);
+      reload ? read_git_method('#{column}') : read_attribute(:#{column}); end"          
+
+      evaluate_attribute_method column, git_read_method
+  
+      git_write_method = "def #{column}=(val); write_git_method('#{column}', val); end"          
+      evaluate_attribute_method column, git_write_method
+    end
+
+To get it working properly under Rails 3, we can replace the `evaluate_attribute_method` call with a simple `class_eval` like this:
+
+    self.git_settings.versioned_fields.each do |column|
+      class_eval("def #{column}(reload = true); reload ?
+        read_git_method('#{column}') : read_attribute(:#{column}); end")        
+  
+      class_eval("def #{column}=(val); write_git_method('#{column}', val); end")  
+    end
+    
+This fix should remove any barriers to starting things like `script/console` or at least running `rake`.  If you `rake`, you'll be confronted with an error related to the testing class syntax.  This is because we're not requiring `context`, the test framework I used.  First, you'll need to install the gem from my Github (the `context` gem on Gemcutter *isn't* the same) and then add it to the `Gemfile`.  Then you'll need to copy the old `test_helper` code into the new file (or simply copy/move the file over).  Another `rake` run will show another error related to `acts_like_git`:
+
+    NoMethodError: undefined method `callback' for #<Page:0x10371cfd8>
+
+Previously, one could use the `callback` method to fire off the logic attached to a callback like `after_create`.  `acts_like_git` creates a callback for `after_commit`, but since we don't use it in this app, we can remove the calls to it.  So, all lines like this in `lib/acts_like_git/active_record_ext/callbacks.rb`:
+
+    callback(:after_commit) if value
+    
+...can now become simple method calls like this:
+
+    after_commit if value
+    
+That should take care of upgrading `acts_like_git` to work with Rails 3.  Now, `rake` again and you'll likely see something like this:
+
+    ActionController::RoutingError: No route matches {:controller=>"users", 
+    :user=>{:password_confirmation=>"quire69", :password=>nil, 
+    :email=>"quire@example.com", :login=>"quire"}, :action=>"create"}
+    
+This, obviously, means we haven't converted our routes yet.  So, let's convert them now, from this:
+
+    ActionController::Routing::Routes.draw do |map|
+      map.resources :pages, :member => {:revert => :post, :revisions => :get}
+  
+      map.logout '/logout', :controller => 'sessions', :action => 'destroy'
+      map.login '/login', :controller => 'sessions', :action => 'new'
+      map.register '/register', :controller => 'users', :action => 'create'
+      map.signup '/signup', :controller => 'users', :action => 'new'
+      map.resources :users
+
+      map.resource :session
+      map.root :controller => "pages", :action => 'show', :id => "home"
+    end
+
+...to this:
+
+    Perwikity::Application.routes.draw do
+      resources :pages do
+        member do
+          post :revert
+          get :revisions
+        end
+      end
+
+      match '/logout' => 'sessions#destroy', :as => :logout
+      match '/login' => 'sessions#new', :as => :login
+      match '/register' => 'users#create', :as => :register
+      match '/signup' => 'users#new', :as => :signup
+
+      resources :users
+      resource :session
+
+      root :to => 'pages#show'
+    end
+
+Next, if you `rake` you'll get some errors about various methods missing.  These errors stem from the fact that we haven't yet moved the code from our old `ApplicationHelper` and `ApplicationController` into the new files.  Once you do that, those errors should disappear.  If you run `rake` again, all the tests should be green.
+
+> *PROTIP:* If you get strange failures with versioning, remove the test Git repository and add `Page.all.each(&:destroy)` to an `after(:all)`; that just means somehow the database and the Git repository got out of sync.
+
+Next, delete `public/index.html` and boot the application with `rails server`.  
+
+#### A few dangling issues
+
+Once the application boots, go ahead and click around, create some pages, edit a page, and so on.  As you do, you'll notice there are still a few minor lingering issues that, while not affecting the general operation of the application, are still annoying nonetheless:
+
+* If you click around the application, you'll notice in a lot of places it's just spitting out the HTML from helpers rather than rendering it.  This ugliness is due to Rails' new XSS protection/escaping; to fix it, wrap the helper calls in `raw()`.  This tweak should fix any of those issues.
+* Next, you'll probably notice that the links that use the `:method` argument (specifically the "revert to this" links) will not function.  This issue is due to a current Rails bug, which will hopefully be fixed soon.  In the mean time, you'll want to switch the method call to `button_to` rather than `link_to`.
+
+Now, if you run the `rails:upgrade:check` task again, you'll notice the only issues pertain to the `restful_authentcation` plugin (which don't even matter anyhow since all the code is generated from that plugin).  The upgrade is complete!  Now it's time to go back and fix all those nasty deprecation messages in the tests.
+
+#### Lessons learned
+
+I think we can draw a few general lessons from working on this application:
+
+* **Plugins and gems can break things in unusual ways**  A lot of plugins do weird things with Rails internals.  Fortunately, `acts_like_git` is pretty straightforward, but others, like `has_many_polymorphs`, make things more complicated.  Be on the look out for weird issues that bubble up from these libraries.
+* **Manually checking over views is vital**  Issues in the views such as the non-functioning `link_to ... :method` would have never come up in tests (unless we're using Selenium) and probably would not have thrown any sort of error on boot.  Nothing can replace manual testing, especially in situations like this.
+* **Tests are a God-send**  Even though tests wouldn't catch some issues in the views, they are *essential* in verifying behavior in other parts of the code.  If you're attempting this upgrade on a codebase without tests, may God have mercy on your soul.
 
 ### Application Case Study: Jamis Buck's Bucketwise
 
-#### Getting the application bootable
+#### First steps
 
 #### First issues: 
 
