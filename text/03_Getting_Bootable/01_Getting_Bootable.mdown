@@ -316,7 +316,7 @@ Not terrible, but the `:body` parameter is awkward since it's not really a "body
       end
     end
 
-Simply populate the attachments hash with your attachment data and ActionMailer takes care of the rest.  If you add an attachment, Rails does not implicitly render a template for the message; you will have to manually specify them (continue reading for information on how to do that).
+Simply populate the attachments hash with your attachment data and ActionMailer takes care of the rest.  If you add an attachment, Rails does not implicitly render a template for the message; you will have to manually specify it (continue reading for information on how to do that).
 
 Explicit multipart (i.e., specifying the parts manually rather than implicitly from the template names) has also been revamped; in Rails 2.x, you specified parts of a mail message like this:
 
@@ -337,7 +337,7 @@ Explicit multipart (i.e., specifying the parts manually rather than implicitly f
       end
     end
 
-In an effort to bring the Action Mailer API more in line with controllers, a `respond_to`-like block syntax has been added.  The above mailer would look like this using this new syntax:
+To make the Action Mailer API more in line with controllers, Rails 3 adds a `respond_to`-like block syntax.  So this is how the same mailer looks using the new syntax:
 
     class UserMailer < ActionMailer::Base
       def confirmation_message(recipient)
@@ -356,7 +356,7 @@ In an effort to bring the Action Mailer API more in line with controllers, a `re
       end
     end
 
-As you can see, the `mail` method takes a block and provides a block variable that configures the formats available.  This form is useful for specifying only certain templates to render or providing extra configuration information to the renderer for certain formats (as we've done here with `:transfer_encoding` for the plaintext template).  If you use this syntax, then Rails does implicitly render any mailer templates; you must explicitly provide every part you want included in the message.
+As you can see, the `mail` method takes a block and provides a block variable that configures the formats available.  This form is useful for specifying only certain templates to render or providing extra configuration information to the renderer for certain formats (as we've done here with `:transfer_encoding` for the plaintext template).  If you use this syntax, Rails does not implicitly render any mailer templates; you must explicitly provide every part you want included in the message.
 
 #### New Active Record API
 
