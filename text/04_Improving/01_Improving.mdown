@@ -408,15 +408,31 @@ The API is basically to inherit from `ActiveModel::Validator` and implement a `v
 
 This pattern is nice for wrapping up a lot of unruly validation code, but a more interesting variation on it will be building class factories based on parameters that build these validation classes.  You can find a little more information these and other Active Model validation features in its API documentation.*http://api.rails.info/classes/ActiveModel/Validator.html*{.fn}
 
-#### Using Active Relation to the max
-
-Action Relation relations can also be used to great effect for other purposes.  
-
-**TODO Example of composing and using relations directly**
-
 #### Caching and relations
 
-One of the smartest uses of the `Relation` objects is to alleviate your caching burden.  Normally in a Rails application, you want to cache three things: template rendering, sticky controller logic, and database query results.  
+One of the smartest uses of the `Relation` objects is to alleviate your caching burden.  Normally in a Rails application, you want to cache three things: template rendering, sticky controller logic, and database query results.  Rails has facilities for each one, but it's difficult to balance each tier.  Often times, people will cache templates but still let their controller logic run; they will cache database objects and forget to properly cache their views.
+
+But with the new Active Record functionality and `Relation` objects, it makes it simple to get a lot of speed out of just a little caching logic.  The trick is that queries are not run until you call something like `all` or `each` on the `Relation` object, so if you push this logic into the view as much as possible and cache the view, then you can get twice the caching power from a simple mechanism.  So, for example, let's say you had a controller action like this:
+
+    def index
+      @posts = Post.where(:published => true).limit(20)
+    end
+
+Currently, `@posts` is a `Relation` and has not executed a database query.  If our view looked like this...
+
+    <% @posts.each do |post| %>
+      <%= render :partial => 'post', :object => post %>
+    <% end %>
+    
+...then the query would be executed when we call `each`.  But, if we wrap that in a `cache` block like so:
+
+    <% cache do %>
+      <% @posts.each do |post| %>
+        <%= render :partial => 'post', :object => post %>
+      <% end %>
+    <% end %>
+
+The query is never executed nor do we hit the cache when there is a cache hit in the view fragment, which is even better than using a model and view caching setup.  This, of course, won't work in *every* situation, but it does offer an excellent little bonus for this common pattern.
 
 ### Building better data classes
 
@@ -435,8 +451,52 @@ So, for example, let's say you had a data class that represented a simple microb
       end
     end
     
+    m = Message.new(nil, 13)
+    m.valid?   # => false
+    m.body = "Hello there!"
+    m.valid?   # => true
+    
 Now when you create these messages to be posted via some API library, you can validate their conformity to the API without a lot of extra hassle.  A few API providers have already integrated this into their gems, making it simple to make sure you're posting valid data.
 
-**TODO: Examples of other functionality**
+Another excellent feature you can mix in to any object is callbacks, just like `after_create`, `before_save`, and their friends in Active Record.  
 
-Active Model also provides facilities for (de)serializing objects, tracking attributes' dirty status, observers, and more.  You can read up on them on blogs*http://yehudakatz.com/2010/01/10/activemodel-make-any-ruby-object-feel-like-activerecord/*{.fn} and, of course, the API documentation.*http://api.rails.info/*{.fn}
+> **PROTIP:** If you've ever used `alias_method_chain`, let me recommend you take a look at this feature.
+
+To define your own callbacks, you simply extend a class with `ActiveModel::Callbacks` and use `define_model_callbacks` to tell it what method to create a callback for.  For example:
+
+    class Message
+      extend ActiveModel::Callbacks
+
+      define_model_callbacks :deliver
+    end
+
+This code will now add a `before_deliver`, `after_deliver`, and `around_deliver` message to allow you to define callbacks for a call to `deliver`.  To use them, you must first define your callback method with a block to handle the callback execution:    
+
+    def deliver
+      _run_deliver_callbacks do
+        puts "DELIVER!"
+      end
+    end
+    
+The `_run_*_callbacks` block will execute the `before_*` call before the block logic is executed, `after_*` after the exit of the block, and `around_*` callbacks around the logic as yielded.  Setting up the syntax in this manner lets you run setup logic or teardown logic before/after the callbacks are executed.  So, to define some callbacks on this class, we would do something like this:
+
+    before_deliver :do_this_before
+    after_deliver :do_this_after
+
+    def do_this_before
+      puts "Before..."
+    end
+
+    def do_this_after
+      puts "...After"
+    end
+
+This will cause `do_this_before` to (obviously) be executed before the block is ran in `deliver` and `do_this_after` to be executed after.  If you create an object and call `deliver` on it, the result would look like this:
+
+    Before...
+    DELIVER!
+    ...After
+
+These callbacks are a fantastic alternative to `alias_method_chain`.  Changing to callbacks would probably require a little more code but the performance boost would be worth it.
+
+Active Model also provides facilities for (de)serializing objects, tracking attributes' dirty status, adding robust error tracking, and more.  You can read up on them on blogs*http://yehudakatz.com/2010/01/10/activemodel-make-any-ruby-object-feel-like-activerecord/*{.fn} and, of course, the API documentation.*http://api.rails.info/*{.fn}

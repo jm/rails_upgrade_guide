@@ -1,13 +1,13 @@
 
 ## Case Studies
 
-Now that we've looked at some of the steps involved with upgrading a Rails application to Rails 3 and some ideas for improving your code using the new features, let's take a look at some practice case studies in upgrading.  Each of these either has a fork on my Github (http://github.com/jm) that you can follow along with or will have a Github URL to point to their head repository where others have put the work in to upgrade them.
+Now that we've looked at the steps involved with upgrading a Rails application to Rails 3 and some ideas for improving your code using the new features, let's take a look at some practical case studies in upgrading.  You should have received a Git repository in the .zip file for the book which has each of these applications; each repository has a `rails3` branch that you can follow as we go through these steps (some of them are out of order in the repository, mostly because I committed them out of order on accident).
 
 ### Application Case Study: Perwikity
 
-Last year sometime I wrote a small wiki system named Perwikity*http://github.com/jm/perwikity*{.fn}.  It was developed primarily to eventually (hopefully) be used as the official Rails wiki, but the wiki eventually became powered by the awesome DokuWiki rather than a dogfooded solution.  It runs on Rails 2.3 and is backed by the database along with a Git repository for versioning; grab the application from my Github and follow the install instructions.  
+Last year sometime I wrote a small wiki system named Perwikity*http://github.com/jm/perwikity*{.fn}.  It was developed primarily to eventually (hopefully) be used as the official Rails wiki, but the wiki eventually became powered by the awesome DokuWiki rather than a dogfooded solution.  It runs on Rails 2.3 and is backed by the database along with a Git repository for versioning; grab the application from my Github and follow the install instructions (just a few `rake` tasks).  
 
-First, install `rails_upgrade` and run the `rails:upgrade:check` task to get an inventory of what's in need of upgrading:
+Next, install `rails_upgrade` and run the `rails:upgrade:check` task to get an inventory of what's in need of upgrading:
 
     Old gem bundling (config.gems)
     The old way of bundling is gone now.  You need a Gemfile for bundler.
@@ -40,13 +40,13 @@ As you can see, it didn't fail *every* check (no mailers!), but there is signifi
 
 #### Getting to bootable
 
-Running any task or command related to the app will cause it to spew various errors about missing files and gems to be required, so the first step is to add our gems to the `Gemfile`.  I didn't use `config.gem` here because it didn't work well, but since Bundler manages all gem imports in Rails 3, we'll need to make sure they're in the `Gemfile`.  We know we'll need `grit`*http://github.com/mojombo/grit*{.fn} to interface with Git and `RedCloth` to handle the Textile rendering (you can use `bluecloth` or something else; check the app's `README` for more information).  We'll also need `will_paginate`, but we'll need the `3.0.pre` version of it for Rails 3 compatibility.  So, add them to the `Gemfile`:
+Running any task or command related to the app will cause it to spew various errors about missing files and gems to be required, so the first step is to add our gems to the `Gemfile`.  I didn't use `config.gem` here because it didn't work well at the time, but since Bundler manages all gem imports in Rails 3, we'll need to make sure they're in the `Gemfile`.  We know we'll need `grit`*http://github.com/mojombo/grit*{.fn} to interface with Git and `RedCloth` to handle the Textile rendering (you can use `bluecloth` or something else; check the app's `README` for more information).  We'll also need `will_paginate`, but we'll need the `3.0.pre` version of it for Rails 3 compatibility.  So, add them to the `Gemfile`:
 
     gem 'grit'
     gem 'RedCloth'
     gem 'will_paginate', '3.0.pre'
 
-Adding those should take away the errors related to gem requirements, but now you'll probably encounter an error like this:
+**Changes in the API** Adding those should take away the errors related to gem requirements, but now you'll probably encounter an error like this:
 
     /Library/Ruby/Gems/1.8/gems/activerecord-3.0.0.beta/lib/
     active_record/base.rb:1300:
@@ -74,7 +74,7 @@ To get it working properly under Rails 3, we can replace the `evaluate_attribute
       class_eval("def #{column}=(val); write_git_method('#{column}', val); end")  
     end
     
-This fix should remove any barriers to starting things like `script/console` or at least running `rake`.  If you `rake`, you'll be confronted with an error related to the testing class syntax.  This is because we're not requiring `context`, the test framework I used.  First, you'll need to install the gem from my Github (the `context` gem on Gemcutter *isn't* the same) and then add it to the `Gemfile`.  Then you'll need to copy the old `test_helper` code into the new file (or simply copy/move the file over).  Another `rake` run will show another error related to `acts_like_git`:
+This fix should remove any barriers to starting things like `rails console` or at least running `rake`.  If you `rake`, you'll be confronted with an error related to the testing class syntax.  This is because we're not requiring `context`, the test framework I used.  First, you'll need to install the gem from my Github (the `context` gem on Gemcutter *isn't* the same) and then add it to the `Gemfile` in the `:test` group.  Then you'll need to copy the old `test_helper` code into the new file (or simply copy/move the file over).  Another `rake` run will show another error related to `acts_like_git`:
 
     NoMethodError: undefined method `callback' for #<Page:0x10371cfd8>
 
@@ -86,7 +86,9 @@ Previously, one could use the `callback` method to fire off the logic attached t
 
     after_commit if value
     
-That should take care of upgrading `acts_like_git` to work with Rails 3.  Now, `rake` again and you'll likely see something like this:
+That should take care of upgrading `acts_like_git` to work with Rails 3.  
+
+**Routes and the rest** Now, `rake` again and you'll likely see something like this:
 
     ActionController::RoutingError: No route matches {:controller=>"users", 
     :user=>{:password_confirmation=>"quire69", :password=>nil, 
@@ -141,7 +143,7 @@ Once the application boots, go ahead and click around, create some pages, edit a
 * If you click around the application, you'll notice in a lot of places it's just spitting out the HTML from helpers rather than rendering it.  This ugliness is due to Rails' new XSS protection/escaping; to fix it, wrap the helper calls in `raw()`.  This tweak should fix any of those issues.
 * Next, you'll probably notice that the links that use the `:method` argument (specifically the "revert to this" links) will not function.  This issue is due to a current Rails bug, which will hopefully be fixed soon.  In the mean time, you'll want to switch the method call to `button_to` rather than `link_to`.
 
-Now, if you run the `rails:upgrade:check` task again, you'll notice the only issues pertain to the `restful_authentcation` plugin (which don't even matter anyhow since all the code is generated from that plugin).  The upgrade is complete!  Now it's time to go back and fix all those nasty deprecation messages in the tests.
+Now, if you run the `rails:upgrade:check` task again, you'll notice the only issues pertain to the `restful_authentcation` plugin (which don't even matter anyhow since all the code is generated from that plugin).  The upgrade is complete!  Now it's time to go back and fix all those nasty deprecation messages in the tests...
 
 #### Lessons learned
 
@@ -153,8 +155,220 @@ I think we can draw a few general lessons from working on this application:
 
 ### Application Case Study: Jamis Buck's Bucketwise
 
-#### First steps
+Jamis Buck, Rails core alumni and developer at 37signals, wrote a neat little finance management application named Bucketwise*http://github.com/jamis/bucketwise*{.fn}.  It's very similar to the "envelope system" espoused by some financial experts; essentially, you divide and budget your income into "buckets" and place expenses and such into those buckets to track how you're spending your money.  Very useful if you're looking to keep yourself on a tight budget!  To get going, grab the app from Jamis' Github and follow its installation instructions.
 
-#### First issues: 
+After that, install `rails_upgrade` and run `rake rails:upgrade:check`.  Now take a look at the report:
 
-#### The case of the missing helpers
+    New file needed: config/application.rb
+    You need to add a config/application.rb.
+    More information: http://omgbloglol.com/post...
+
+    Deprecated constant(s)
+    Constants like RAILS_ENV, RAILS_ROOT, and RAILS_DEFAULT_LOGGER 
+    are now deprecated.
+    More information: http://litanyagainstfear.com/blog...
+
+    Soon-to-be-deprecated ActiveRecord calls
+    Methods such as find(:all), find(:first), finds with conditions, 
+    and the :joins option will soon be deprecated.
+    More information: http://m.onkey.org...
+
+    named_scope is now just scope
+    The named_scope method has been renamed to just scope.
+    More information: http://github.com/rails/rails...
+
+    Old router API
+    The router API has totally changed.
+    More information: http://yehudakatz.com...
+
+    Deprecated test_help path
+    You now must require 'rails/test_help' not just 'test_help'.
+    More information: http://weblog.rubyonrails.org...
+    
+Next, run `rake rails:upgrade:backup` and regenerate the application with Rails 3 in the current path using `rails .`.
+
+#### Broken to bootable
+
+If you `rake`, you'll find that just about every test is broken at this point (this is what we want, of course).  The easiest way to get some tests passing is to convert the routes file using `rake rails:upgrade:routes`.  You'll start with a `routes.rb` like this:
+
+    ActionController::Routing::Routes.draw do |map|
+      map.resource :session
+ 
+      map.resources :subscriptions, :has_many => [:accounts, :events, :tags]
+      map.resources :events, :has_many => :tagged_items, :member => { :update => :post }
+      map.resources :buckets, :has_many => :events
+      map.resources :accounts, :has_many => [:buckets, :events, :statements]
+      map.resources :tags, :has_many => :events
+      map.resources :tagged_items, :statements
+ 
+      map.with_options :controller => "subscriptions", :action => "index" do |home|
+        home.root
+        home.connect ""
+      end
+    end
+
+The task for converting the routes isn't perfect (e.g., at the time of writing, it doesn't support the `:has_many` option yet and has trouble with how Jamis wrote the root route), but after some tweaking you should end up with a routes file that looks like this:
+
+    Bucketwise::Application.routes.draw do
+      resource :session
+  
+      resources :subscriptions do
+        resources :accounts, :events, :tags
+      end
+  
+      resources :events do
+        member do
+          post :update
+        end
+      end
+
+      resources :buckets do
+        resources :events
+      end
+  
+      resources :accounts do
+        resources :buckets, :events, :statements
+      end
+  
+      resources :tags do
+        resources :events
+      end
+  
+      resources :tagged_items
+      resources :statements
+  
+      root :to => "subscriptions#index"
+    end
+
+If you have any trouble understanding this new routes file, refer to Section 4.2.1 for more information on the new router syntax.
+
+**Copying from old to new** Next, you'll want to move the configuration information over from `environment.rb.rails2` to `application.rb`; you should end up with a `Bucketwise::Application` class in `application.rb` that looks like this:
+
+    module Bucketwise
+      class Application < Rails::Application
+        config.action_controller.session = YAML.load_file("#{RAILS_ROOT}/config/session.yml")
+        config.load_paths += %W( #{RAILS_ROOT}/app/concerns )
+
+        # Configure sensitive parameters which will be filtered from the log file.
+        config.filter_parameters << :password
+      end
+    end
+    
+You'll also want to create your `Gemfile` this point; the only gem you'll need to add should be `haml`.
+
+If you `rake` again, you'll hit some errors related to a missing method named `login_default_user`; to fix this error, you'll need to copy the code from the old `test_helper.rb` to the new file.  Running `rake` again will produce an error like this:
+
+    NameError: undefined local variable or method `user' for #<TagsController:0x1059de800>
+
+This error stems from code missing from `ApplicationController`; to fix it, copy the old `ApplicationController` and `ApplicationHelper` over to the new one.  The next blob of errors you'll hit look like this:
+
+    ActionView::Template::Error: undefined method `filename' for app/views/tags/show.html.haml:ActionView::Template
+    
+This error is caused by `haml` and its support for Rails 3; to fix this you'll need to require `'haml/template'` in `application.rb`.  This should pull in the right code to make `haml` behave properly.
+
+Running `rake` again will produce even more errors in your functional tests that look like this:
+
+    ActionView::Template::Error: undefined method `link_to_function' for #<Class>
+    
+The Rails Core team removed the `link_to_function`, `button_to_function`, etc. methods from Rails core; this removal, while a minor inconvenience, is part of the whole JavaScript agnosticism movement, which is a generally positive thing.  To get those methods back, you need to install the `prototype_legacy_helper` plugin:
+
+    rails plugin install git://github.com/rails/prototype_legacy_helper
+    
+After installing that plugin, those errors should go away. 
+
+**Rails issues** The next error you'll likely encounter will be related to a missing template.  There are two problems here.  First, this template isn't actually missing since it's actually an HTML file, and second, the file is there (`public/404.html`).  There appears to be a bug in Rails in `render :file` which doesn't allow it to find the file (I've filed a bug in the Rails Lighthouse for it); for now, you can use a little hack to make it work.  Replace this bit of code...
+
+    def render_404
+      respond_to do |format|
+        format.html { render :file => "#{RAILS_ROOT}/public/404.html", :status => :not_found }
+        format.xml  { head :not_found }
+      end
+    end
+    
+...with this block of code:
+
+    def render_404
+      respond_to do |format|
+        format.html { render :text => File.read("#{Rails.root}/public/404.html"), :status => :not_found }
+        format.xml  { head :not_found }
+      end
+    end
+
+Essentially, we read the file in as a string and then send that to the client.  While not the most efficient way to do it, it will work until the Rails Core team can get that issue patched up.
+
+Next, you'll find an error in your tests related to an undefined method `deposits` on `NamedScope`.  If you look at the offending code, you'll see it's simply calling, the `deposits` method on a collection of uncleared transactions:
+
+    - if uncleared.deposits.any?
+      %fieldset#deposits
+        %legend Deposits
+
+The relationship there is that an `Account` instance `has_many` `AccountItem` instances.  This association is extended by the  `CategorizedItems` module, which defines a `deposits` method.  The rub is that `AccountItem` also defines a `scope` named `uncleared`, which is what is being called here, and since it's a `scope`, it isn't extended by the same logic as the association.  The problem is fixable by extending the `scope` with the same logic as the association:
+
+    scope :uncleared, lambda { |*args| AccountItem.options_for_uncleared(*args) } do
+      def deposits
+        @deposits ||= to_a.select { |item| item.amount > 0 }
+      end
+
+      def checks
+        @checks ||= to_a.select { |item| item.amount < 0 && item.event.check_number.present? }
+      end
+
+      def expenses
+        @expenses ||= to_a.select { |item| item.amount < 0 && item.event.check_number.blank? }
+      end
+    end
+
+Running `rake` again should present you with an error related to routes:
+
+    ActionView::Template::Error: undefined method `event_update_path' for #<Class>
+
+We define a member route on `events` for the `update` action.  I'm not entirely sure why Jamis has this route here (perhaps something in Rails 2.3 was causing strange behavior without it), but we don't need it now.  You can safely remove this route and change the single reference to it to be simply `event_path`.
+
+**A subtle shift** The last error you'll encounter is rather cryptic.  It will look something like this:
+
+    RuntimeError: Called id for nil, which would mistakenly be 4 -- 
+      if you really wanted the id of nil, use object_id
+        app/models/account.rb:110:in `set_starting_balance'
+
+If you go look at the referenced code and the surrounding bits, you'll see that it's a series of callbacks (the following is grabbed from a few points in the file):
+
+    after_create :create_default_buckets, :set_starting_balance
+
+    def create_default_buckets
+      buckets.create({:name => DEFAULT_BUCKET_NAME, :role => "default"}, :author => author)
+    end
+
+    def set_starting_balance
+      if starting_balance && !starting_balance[:amount].to_i.zero?
+        amount = starting_balance[:amount].to_i
+        role = amount > 0 ? "deposit" : "payment_source"
+        subscription.events.create({:occurred_on => starting_balance[:occurred_on],
+            :actor_name => "Starting balance",
+            :line_items => [{:account_id => id, :bucket_id => buckets.default.id,   # line 110
+              :amount => amount, :role => role}]
+          }, :user => author)
+        reload # make sure the balance is set correctly
+      end
+    end
+
+The issue is that the callbacks are out of order.  On Line 110, it's grabbing `bucket.default.id`, which at this point doesn't exist since it's created in the other callback.  The callbacks are *specified* in order, but it seems they are executed in reverse order.  So to fix it you simply need to reverse the order in which they are specified.
+
+> *PROTIP:* You could also collapse these into a single callback; since the default bucket creation is a single line of code, it wouldn't be the worst thing to put them together.
+
+That should take care of all the errors and such you'll encounter in the tests.
+
+#### Finishing up 
+
+There are a couple of loose ends to tie up before we call this upgrade finished.
+
+* Again you'll notice a number of places in need of a call to `html_safe` or `raw`, specifically calls to various helpers.  Adding those in will make things look more sane.
+* Currently, there are significant problems in the JavaScript code for this application, rendering it almost useless.  I'm currently working to get these problems resolved (I believe they are related to the Prototype version upgrade), but if you manage to fix them before I get a chance, please do ping me via Twitter at @jm or via Github.*http://github.com/jm*{.fn}
+* If you run the `rake rails:upgrade:check` again you'll notice a few minor things you will need to fix, especially the use of the old style constants like `RAILS_ROOT`.
+
+#### Things to remember
+
+There a few things that this app teaches us about upgrading a Rails application:
+
+* **Some deprecations can be undone if needed**  Even though Rails Core removed the `link_to_function` method, we were able to bring it back using a plugin; this strategy makes sense since we're not going to use anything but Prototype in this application.  I would imagine that a number of deprecated features will live on in plugins (much like `acts_as_list`, `paginate`, and friends have already), so if you use one of these feature pervasively, you probably don't need to worry about it too terribly much.
+* **Rails 3 still has bugs** In this upgrade, we sniffed out a few issues in the Rails 3 beta.  These bugs are inevitable being a beta and all, but it is something to keep in mind.  If you encounter any odd behavior that you are pretty sure is a bug, please do help the Rails Core team out and file a bug at the Rails Lighthouse.*http://rails.lighthouseapp.com/*{.fn}
+* **Behavior has changed in subtle ways** A few errors we stumbled upon, such as the order of callbacks and the behavior of `scopes` and associations, are subtle changes in behavior.  These changes are to be expected, but if undocumented, they can cause you a lot of hassle (as it did here).  Fortunately, we were covered by tests, but if we didn't have such a good suite of tests, we might have been in a world of pain.

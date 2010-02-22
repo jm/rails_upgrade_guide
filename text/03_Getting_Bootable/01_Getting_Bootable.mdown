@@ -33,7 +33,7 @@ Now open up `application.rb`. If you generated the files using the Rails 3 gener
 
 For the most part, all the code inside the Rails initializer block from your old `environment.rb` (i.e., all your `config.*` calls) should transfer straight over: just use the `rails:upgrade:configuration` method or copy and paste them inside the class body.  That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend  you move it either into an initializer or to the bottom of `application.rb`.
 
-> **PROTIP:** You may be wondering, "What about `RAILS_GEM_VERSION`?"  To specify what version of Rails to lock your application to, specify it in the `Gemfile` according to the `bundler` syntax (see Section TODO for more information).
+> **PROTIP:** You may be wondering, "What about `RAILS_GEM_VERSION`?"  To specify what version of Rails to lock your application to, specify it in the `Gemfile` according to the `bundler` syntax (see Section 4.2.2 for more information).
 
 Next, take a look at some of the newly generated code.  You'll notice a block like this:
 

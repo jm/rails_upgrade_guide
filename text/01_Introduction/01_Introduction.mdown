@@ -1,15 +1,6 @@
-## Purchase the whole book!
+## Acknoledgements
 
-Buy the whole book for **$20** and get...
-
-* Over 100 pages of upgrade information
-* A step-by-step guide to upgrading your app to Rails 3
-* High-level discussion of what's new in Rails 3
-* Practical tips on using Rails 3's new features to improve your code
-* Real case studies of upgrading apps and plugins
-* Detailed checklists for upgrading
-
-Head over to [http://railsupgradehandbook.com/](http://railsupgradehandbook.com/) for more information and purchasing!
+Thanks to my wife for her patience and support.  Many thanks to the many people who offered feedback, especially Ryan Waldron (@erebor) who offered useful feedback along with an extreme assault upon my prose.
 
 ## Introduction
 
@@ -88,9 +79,9 @@ You can use this module to make any object behave like an Active Record object. 
  
       validates_presence_of :hostname
  
-      attr_accessor :ip_address, :hostname, :operating_system
-      def initialize(hostname, ip_address, operating_system)
-        @hostname, @ip_address, @operating_system = host, ip_address, operating_system
+      attr_accessor :ip_address, :hostname, :os
+      def initialize(hostname, ip_address, os)
+        @hostname, @ip_address, @os = host, ip_address, os
       end
     end
     
@@ -105,9 +96,18 @@ To get this functionality, simply include `ActiveModel::Validations` and start i
 
 ActionMailer is also getting some love in Rails 3, and the new API is looking especially delicious.  Mailer classes are much more like a controller with some excellent helpers mixed in just for mailing, rather than some weird mashup of a model and a controller.  
 
-    TODO: Awesome example goes here.
+    class MemberMailer < ActionMailer::Base
+      def wall_post_notifier(post, member)
+        mail(:to => member.email,
+             :from => "notifier@network.example.com",
+             :subject => "There is a new post on your wall.")
+      end
+    end
+    
+    mail = MemberMailer.wall_post_notifier(@post, @user)
+    mail.deliver
 
-No more magic `deliver_*` methods, no more weird half-DSL methods for setting things up for the e-mail, and no more wishing we had the power of controllers in mailers.
+No more magical `deliver_*` methods, no more weird half-DSL methods for setting things up for the e-mail, and no more wishing we had the familiarity of controllers in mailers.
 
 Rails is also getting a rather robust instrumentation framework.  In essence, an instrumentation framework lets you subscribe to events inside of a system and respond to them in meaningful ways (e.g., an action renders and the logger logs its result).  Internally the framework is used for things like logging and debugging, but you could easily repurpose the code for other things.  For example, let's say you want to log to the system logger when a particular e-mail is sent out:
 
@@ -129,11 +129,7 @@ Rails is also getting a rather robust instrumentation framework.  In essence, an
     event.duration    # => 0.063
     system_log(event) # => <whatever>
 
-Of course, this is arbitrary, but it adds a really powerful way to respond to certain events in your application.  
-
-    TODO: Practical example with sql stuff here
-
-For example, someone could probably rewrite the `exception_notification` plugin*http://github.com/rails/exception\_notification*{.fn} to use the instrumentation framework to handle and send error e-mails.
+Of course, this is arbitrary, but it adds a really powerful way to respond to certain events in your application.  This framework is primarily geared towards supporting services like New Relic, which monitor various metrics within a Rails application, but I foresee a lot of interesting uses.  For example, someone could probably rewrite the `exception_notification` plugin*http://github.com/rails/exception\_notification*{.fn} to use the instrumentation framework to handle and send error e-mails.  
 
 ### That's great...but why bother?
 
