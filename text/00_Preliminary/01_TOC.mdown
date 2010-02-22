@@ -4,6 +4,7 @@ blah
 
 blah
 
+
 # Rails Upgrade Handbook
 
 * TOC placeholder

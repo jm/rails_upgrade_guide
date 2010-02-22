@@ -240,7 +240,7 @@ The task for converting the routes isn't perfect (e.g., at the time of writing, 
       root :to => "subscriptions#index"
     end
 
-If you have any trouble understanding this new routes file, refer to Section 4.2.1 for more information on the new router syntax.
+If you have any trouble understanding this new routes file, refer to Section 3.2.1 for more information on the new router syntax.
 
 **Copying from old to new** Next, you'll want to move the configuration information over from `environment.rb.rails2` to `application.rb`; you should end up with a `Bucketwise::Application` class in `application.rb` that looks like this:
 

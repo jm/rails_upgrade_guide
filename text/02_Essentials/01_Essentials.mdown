@@ -135,7 +135,7 @@ This task is ideal for generating a base routes file quickly that you can refact
 
 #### `rails:upgrade:gems`: Creating Gemfiles
 
-The next piece is a Gemfile generator; essentially it takes your `config.gem` directives in `environment.rb` and generates a nice `Gemfile` for the new gem bundler (see Section 4.2.2 for more information on `bundler`).  To run it, simply execute:
+The next piece is a Gemfile generator; essentially it takes your `config.gem` directives in `environment.rb` and generates a nice `Gemfile` for the new gem bundler (see Section 3.2.2 for more information on `bundler`).  To run it, simply execute:
 
     rake rails:upgrade:gems
     
