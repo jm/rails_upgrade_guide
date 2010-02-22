@@ -410,9 +410,11 @@ This pattern is nice for wrapping up a lot of unruly validation code, but a more
 
 #### Caching and relations
 
-One of the smartest uses of the `Relation` objects is to alleviate your caching burden.  Normally in a Rails application, you want to cache three things: template rendering, sticky controller logic, and database query results.  Rails has facilities for each one, but it's difficult to balance each tier.  Often times, people will cache templates but still let their controller logic run; they will cache database objects and forget to properly cache their views.
+One of the smartest uses of the `Relation` objects is to alleviate your caching burden.  Normally in a Rails application, you want to cache three things: template rendering, sticky controller logic, and database query results.  Rails has facilities for each one, but it's difficult to balance each tier.  Often times, people will cache templates but still let their controller logic run; or they will cache database objects and forget to properly cache their views.
 
-But with the new Active Record functionality and `Relation` objects, it makes it simple to get a lot of speed out of just a little caching logic.  The trick is that queries are not run until you call something like `all` or `each` on the `Relation` object, so if you push this logic into the view as much as possible and cache the view, then you can get twice the caching power from a simple mechanism.  So, for example, let's say you had a controller action like this:
+But with the new Active Record functionality and `Relation` objects, it's simple to get a lot of speed out of just a little caching logic.  The trick is that queries are not run until you call something like `all` or `each` on the `Relation` object. So if you push this logic into the view as much as possible and then cache the view, then you can get twice the caching power from a simple mechanism.
+
+For example, let's say you had a controller action like this:
 
     def index
       @posts = Post.where(:published => true).limit(20)
@@ -432,7 +434,9 @@ Currently, `@posts` is a `Relation` and has not executed a database query.  If o
       <% end %>
     <% end %>
 
-The query is never executed nor do we hit the cache when there is a cache hit in the view fragment, which is even better than using a model and view caching setup.  This, of course, won't work in *every* situation, but it does offer an excellent little bonus for this common pattern.
+TODO - I don't get "nor do we hit the cache when there is a cache hit in the view fragment" - what cache do we not hit? If there's a cache hit in the view fragment, don't we hit the cache by definition?  I'm confuzed.
+
+, the query is never executed, nor do we hit the cache when there is a cache hit in the view fragment, which is even better than using a model and view caching setup.  Of course, this won't work in *every* situation, but it does offer an excellent little bonus for this common pattern.
 
 ### Building better data classes
 
@@ -491,7 +495,7 @@ The `_run_*_callbacks` block will execute the `before_*` call before the block l
       puts "...After"
     end
 
-This will cause `do_this_before` to (obviously) be executed before the block is ran in `deliver` and `do_this_after` to be executed after.  If you create an object and call `deliver` on it, the result would look like this:
+This will cause `do_this_before` to (obviously) be executed before the block is run in `deliver` and `do_this_after` to be executed after.  If you create an object and call `deliver` on it, the result would look like this:
 
     Before...
     DELIVER!
