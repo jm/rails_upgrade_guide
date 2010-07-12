@@ -48,7 +48,7 @@ blockquote {
 }
 
 blockquote pre, blockquote code {
-  background: #FEEFC4;  
+  background: #FEEFC4 !important;  
 }
 
 pre, code { font-family: "Courier New" !important;}

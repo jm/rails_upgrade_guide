@@ -434,9 +434,7 @@ Currently, `@posts` is a `Relation` and has not executed a database query.  If o
       <% end %>
     <% end %>
 
-TODO - I don't get "nor do we hit the cache when there is a cache hit in the view fragment" - what cache do we not hit? If there's a cache hit in the view fragment, don't we hit the cache by definition?  I'm confuzed.
-
-, the query is never executed, nor do we hit the cache when there is a cache hit in the view fragment, which is even better than using a model and view caching setup.  Of course, this won't work in *every* situation, but it does offer an excellent little bonus for this common pattern.
+The query is never executed, nor do we hit the cache for our model objects when there is a cache hit in the view fragment; since we don't hit the cache twice, this code is actually even better than using a model and view caching setup.  Of course, this won't work in *every* situation, but it does offer an excellent little bonus for this common pattern.
 
 ### Building better data classes
 
@@ -504,3 +502,96 @@ This will cause `do_this_before` to (obviously) be executed before the block is 
 These callbacks are a fantastic alternative to `alias_method_chain`.  Changing to callbacks would probably require a little more code but the performance boost would be worth it.
 
 Active Model also provides facilities for (de)serializing objects, tracking attributes' dirty status, adding robust error tracking, and more.  You can read up on them on blogs*http://yehudakatz.com/2010/01/10/activemodel-make-any-ruby-object-feel-like-activerecord/*{.fn} and, of course, the API documentation.*http://api.rails.info/*{.fn}
+
+### Exploiting Active Support
+
+Active Support has received a serious retooling in Rails 3, improving performance and extracting a few new useful tools.  In this section, we're going to take a look at two of those: `class_attribute` and `ActiveSupport::Concern`.
+
+#### Inheriting attributes (the right way)
+
+Since Rails 2.1, Active Support has provided a little method called `class_inheritable_accessor` for creating attribute accessors which are inheritable by child classes (normally these methods are only existent on the class they are defined).  
+
+    class User
+      class_inheritable_accessor :user_name
+    end
+    
+    class Admin < User
+    end
+    
+    a = Admin.new
+    a.user_name = "root"
+
+It worked well, but it was a bit of a hack.  Essentially, it created logic in an `inherited` hook that would rewrite the attribute accessors to the child class.  Again, it worked, but it had its own share of issues and quirks that made it quite annoying to work with.
+
+In Rails 3, though, Active Support now provides the `class_attribute` method to do the same thing, except the right way.  The API for `class_attribute` is exactly the same as `class_inheritable_accessor` except you call `class_attribute`:
+
+    class User
+      class_attribute :user_name
+    end
+    
+You can now the use same API as the previous example.  The `class_attribute` method by using class instance variables and defining the method's on the class's singleton class.  A problem with the previous implementation was that if you wrote the parent's accessor after inherited classes were defined, it wouldn't be properly propagated to the child classes.  The new implementation fixes this problem while simultaneously appeasing the conscience of every thinking Ruby developer.
+
+#### Cleaning up modules with `ActiveSupport::Concern`
+
+A very common pattern among Ruby developers is to `include` or `extend` a module and then use the Ruby-provided hooks to then `include` or `extend` other modules into the base class.  This pattern is commonly used to `include` a module and then `extend` with class methods or vice-versa (i.e., extend with the module and include instance methods).  So, for example:
+
+    module Queueing
+      def pop
+        # ...
+      end
+      
+      def push(obj)
+        # ...
+      end
+      
+      def setup_enumerable
+        # ...
+      end
+      
+      def self.included(base)
+        setup_enumerable
+        base.extend ClassMethods
+      end
+      
+      module ClassMethods
+        def stock_queue_with(*objs)
+          # ...
+        end
+      end
+    end
+    
+So, when you `include` the module into a class, it will run our stub method `setup_enumerable` and extend the class with the `ClassMethods` module, adding the `stock_queue_with` method to the class methods.  That's an excellent pattern to DRY up a lot of repeated `include`/`extend` logic, but it creates a lot of extra crufty logic in your modules.  `ActiveSupport::Concern` is a solution for this.  It does a few things:
+
+* Automatically extends a `ClassMethods` module if it exists
+* Automatically includes an `InstanceMethods` module if it exists
+* Gives you an `included` method that replaces the `self.included` method
+
+These little hooks will save you a lot of code if you do a lot of extending/including (e.g., writing a plugin).  So, our example now becomes:
+
+    module Queueing
+      extend ActiveSupport::Concern
+      
+      def pop
+        # ...
+      end
+  
+      def push(obj)
+        # ...
+      end
+  
+      def setup_enumerable
+        # ...
+      end
+  
+      included do
+        setup_enumerable
+      end
+  
+      module ClassMethods
+        def stock_queue_with(*objs)
+          # ...
+        end
+      end
+    end
+
+You could wrap those instance methods into an `InstanceMethods` module so that if you extend or include, the behavior should be handled properly, but generally this practice is looked down upon (just pick a way to append your features and stick with it!).

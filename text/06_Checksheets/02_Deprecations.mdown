@@ -27,6 +27,12 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &#10063;&nbsp;&nbsp;&nbsp; | `config.log_path` / `config.log_path=` are deprecated. | Do `paths.log` / `paths.log=` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | The `gem` method in application templates deprecated the `:env` key. | Change it to `:only` |
 &#10063;&nbsp;&nbsp;&nbsp; | The `freeze!` method in application templates is deprecated. | It's no longer needed. |
+&#10063;&nbsp;&nbsp;&nbsp; | `Object#metaclass` is deprecated. | Use `Object#singleton_class`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `rails:freeze:gems` is deprecated. | Use Bundler and `bundle install`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `rails:freeze:edge` is deprecated. | Use Bundler's Git support and `bundle install`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `rails:unfreeze` is deprecated. | Use Bundler. |
+&#10063;&nbsp;&nbsp;&nbsp; | `Date#last_year` is deprecated. | Use `Date#prev_year`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `Date#last_month` is deprecated. | Use `Date#prev_month`. |
 {.deprecation-table}
 
 ### Plugins
@@ -34,17 +40,36 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &nbsp; | Deprecation | How to fix it
 -----|-------------------|--------------:
 &#10063;&nbsp;&nbsp;&nbsp; | Putting Rake tasks in `[path]/tasks` or `[path]/rails/tasks` is no longer supported.  | Place them in `[path]/lib/tasks`. |
+&#10063;&nbsp;&nbsp;&nbsp; | The use of `rails/init.rb` is deprecated.  | Put the logic in a top level/plugin root `init.rb`. |
 {.deprecation-table}
 
 ### Controllers/dispatch
 
 &nbsp; | Deprecation | How to fix it
 -----|-------------------|--------------:
-&#10063;&nbsp;&nbsp;&nbsp; | Disabling sessions for a single controller has been deprecated. | Sessions are lazy loaded, so don't worry about them if you don't use them. |
+&#10063;&nbsp;&nbsp;&nbsp; | Disabling sessions for a single<br />controller has been deprecated. | Sessions are lazy loaded, so don't worry about them if you don't use them. |
+&#10063;&nbsp;&nbsp;&nbsp; | Setting `AC::Base.session_store`<br />directly is deprecated. | Use `config.action_controller.`<br />`session_store`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Setting `AC::Base.session_options`<br />directly is deprecated. | Use `config.action_controller.`<br />`session_options`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Setting `AC::Base.relative_url_root`<br />is no longer effective. | Use a Rack middleware for the same effect. |
 &#10063;&nbsp;&nbsp;&nbsp; | `session.update` is no longer effective. | Use `session.replace` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `session.delete` is deprecated. | Use `session.clear` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `SessionHash#session_id` is deprecated. | Use `request.session_options[:id]` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | `SessionHash#data` is deprecated. | Use `SessionHash#to_hash` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | Overriding `default_url_options` is deprecated. | Use `self.url_options=` instead (usually in a `before_filter`). |
+&#10063;&nbsp;&nbsp;&nbsp; | `Request#path` is deprecated. | Use `Request#path` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `Request#request_uri` is deprecated. | Use `Request#request_uri` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.use_accept_header` is deprecated. | (No fix; the accept header is always taken into account now) |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.resource_action_separator` is deprecated. | (No fix; only works with legacy router API) |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.ip_spoofing_check` is deprecated. | Configure it on your application with `Rails.application.config.`<br />`action_dispatch.ip_spoofing_check=` |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.trusted_proxies=` is deprecated. | Configure it on your application with `Rails.application.config.`<br />`action_dispatch.trusted_proxies` |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.cookie_verifier_secret=` is deprecated. | Configure it on your application with `Rails.application.config.`<br />`secret_token=` |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.perform_caching=` is deprecated. | Configure it on your application with `Rails.application.config.`<br />`perform_caching=` |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.page_cache_directory=` is deprecated. | Configure it on your application with `Rails.application.config.`<br />`page_cache_directory=` |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.asset_path=` is deprecated. | Configure it on your application with `Rails.application.config.`<br />`asset_path=` |
+&#10063;&nbsp;&nbsp;&nbsp; | `AC::Base.helpers_path=` is deprecated. | Configure it on your application with `Rails.application.config.`<br />`helpers_path=` |
+&#10063;&nbsp;&nbsp;&nbsp; | `verify` and its related functionality has been removed. | Install the verify plugin<br /> (`http://github.com/rails/verify`) |
+&#10063;&nbsp;&nbsp;&nbsp; | The `:name_prefix` option in the router DSL has been deprecated. | Use `:as` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | The Rails 2.x router DSL has been deprecated. | (No fix; it will be totally removed in 3.1) |
 {.deprecation-table}
 
 ### Models
@@ -63,6 +88,8 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &#10063;&nbsp;&nbsp;&nbsp; | `errors.each_full` is deprecated. | Use `errors.to_a.each` instead. |
 &#10063;&nbsp;&nbsp;&nbsp; | Providing a block to `composed_of` is deprecated. | Provide a `:converter` argument with a lambda/`Proc`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `colorize_logging` has been moved. | Change the calls to `Rails::Subscriber.`<br />`colorize_logging`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `save(false)` has been removed. | Use `save(:validate => false)` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `with_exclusive_scope` does not work with Active Relation. | Remove the exclusive scope by calling `unscoped` on the object. |
 {.deprecation-table}
 
 ### Views
@@ -77,6 +104,8 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &#10063;&nbsp;&nbsp;&nbsp; | `number_to_human_size` takes an options hash rather than an argument. | Pass an options hash with a `:precision` key. |
 &#10063;&nbsp;&nbsp;&nbsp; | `truncate` takes an options hash instead of arguments. |  Pass a hash with `:length` and `:omission` keys. |
 &#10063;&nbsp;&nbsp;&nbsp; | `:popup` is deprecated on `link_to`. | (No fix) |
+&#10063;&nbsp;&nbsp;&nbsp; | `form_for(:model)` is deprecated. | Use `form_for(@obj, :object_name => :model)`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Helpers that add output can not use `concat` with `<% / %>`. | Return a string and it will be appended to the output. |
 {.deprecation-table}
 
 ### Testing
