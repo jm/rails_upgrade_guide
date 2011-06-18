@@ -33,6 +33,9 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &#10063;&nbsp;&nbsp;&nbsp; | `rails:unfreeze` is deprecated. | Use Bundler. |
 &#10063;&nbsp;&nbsp;&nbsp; | `Date#last_year` is deprecated. | Use `Date#prev_year`. |
 &#10063;&nbsp;&nbsp;&nbsp; | `Date#last_month` is deprecated. | Use `Date#prev_month`. |
+&#10063;&nbsp;&nbsp;&nbsp; | `Object#returning` is deprecated. | Use `Object#tap` or another modern Ruby equivalent. |
+&#10063;&nbsp;&nbsp;&nbsp; | `class_inheritable_attribute` is frowned upon. | Not officially deprecated but you should use `class_attribute` instead. |
+&#10063;&nbsp;&nbsp;&nbsp; | `superclass_delegating_accessor` is deprecated. | Use the `extlib` version. |
 {.deprecation-table}
 
 ### Plugins
@@ -40,6 +43,8 @@ This check list contains nearly every deprecation in Rails 3.  Many of them prob
 &nbsp; | Deprecation | How to fix it
 -----|-------------------|--------------:
 &#10063;&nbsp;&nbsp;&nbsp; | Putting Rake tasks in `[path]/tasks` or `[path]/rails/tasks` is no longer supported.  | Place them in `[path]/lib/tasks`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Putting generators in `[path]/generators` or `[path]/rails_generators` is no longer supported.  | Place them in `[path]/lib/generators`. |
+&#10063;&nbsp;&nbsp;&nbsp; | Generator classes do not inherit from `Rails::Generator` anymore.  | They must inherit from a `Rails::Generators::*` class (usually `Base`). |
 &#10063;&nbsp;&nbsp;&nbsp; | The use of `rails/init.rb` is deprecated.  | Put the logic in a top level/plugin root `init.rb`. |
 {.deprecation-table}
 

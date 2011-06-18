@@ -22,6 +22,10 @@ Simple: the `application.rb` file is required and then the `Application` (Rack e
 
 Now open up `application.rb`. If you generated the files using the Rails 3 generator, you should have one that looks something like this:
 
+    # Necessary requires ...
+    
+    Bundler.require(:default, Rails.env) if defined?(Bundler)
+  
     module TestDevApp
       class Application < Rails::Application
         # ...Insert lots of example comments here...
@@ -31,11 +35,13 @@ Now open up `application.rb`. If you generated the files using the Rails 3 gener
       end
     end
 
-For the most part, all the code inside the Rails initializer block from your old `environment.rb` (i.e., all your `config.*` calls) should transfer straight over: just use the `rails:upgrade:configuration` method or copy and paste them inside the class body.  That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend  you move it either into an initializer or to the bottom of `application.rb`.
+The line about Bundler will be your best friend if you ever decide you don't want to use it for whatever reason (some people love it, others hate it and find solace in other solutions like `isolate`, while others hate the whole concept).  That line requires all bundled gems for the current environment (more on Bundler and environments in a bit); you could also force and environment here or add more environment requires.
+
+Now take a look at the `Application` class body; this is where all that configuration code from `environment.rb` now lives.  For the most part, all the code inside the Rails initializer block from your old `environment.rb` (i.e., all your `config.*` calls) should transfer straight over: just use the `rails:upgrade:configuration` method or copy and paste them inside the class body.  That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend  you move it either into an initializer or to the bottom of `application.rb`.
 
 > **PROTIP:** You may be wondering, "What about `RAILS_GEM_VERSION`?"  To specify what version of Rails to lock your application to, specify it in the `Gemfile` according to the `bundler` syntax (see Section 3.2.2 for more information).
 
-Next, take a look at some of the newly generated code.  You'll notice a block like this:
+If you want to use a different ORM, template engine, or testing framework (that has Rails 3 compatibility), then you need to configure it here also.  A configuration block for those values looks like this:
 
     config.generators do |g|
       g.orm             :active_record
@@ -43,7 +49,7 @@ Next, take a look at some of the newly generated code.  You'll notice a block li
       g.test_framework  :test_unit, :fixture => true
     end
 
-This is where you can configure what ORM, test framework, and template engine Rails will use.  Since you're upgrading existing code, you'll probably stick with the defaults (unless, of course, you're already using something like `haml`), but you could substitute in something like `:datamapper` or `:sequel` for `:active_record`, `:haml` for `:erb`, or `:rspec` for `:test_unit` (once they get it working with Rails 3).  Doing so will set the generators for models, views, etc., to use your tool of choice. For example, if you generate a scaffold with `haml` and `rspec` as your tools, it should in theory generate the templates with Haml syntax and the tests using RSpec. (I don't know if all these generators are available yet, but they should be soon.)
+Since you're upgrading existing code, you'll probably stick with the defaults and won't have to worry about this bit of configuraiton (unless, of course, you're already using something like `haml`), but you could substitute in something like `:datamapper` or `:sequel` for `:active_record`, `:haml` for `:erb`, or `:rspec` for `:test_unit` (once the developers get your choice working with Rails 3).  Doing so will set the generators for models, views, etc., to use your tool of choice. For example, if you generate a scaffold with `haml` and `rspec` as your tools, it should in theory generate the templates with Haml syntax and the tests using RSpec.
 
 The `config/application.rb` file also houses some configuration for other things.
 
@@ -69,7 +75,7 @@ All configuration happens inside the `Application` object for your Rails app, so
 
 #### Converting your routes file
 
-The next step is to move your routes to the Rails 3 router syntax.  The new router is great, but it's not incredibly easy to migrate existing routes over to the new syntax.  Upgrading your routes is fairly simple so long as you haven't done anything complex; it's just not as easy as copying and pasting.  Some things, like `namespaces`, work the same, but most other things have a much-changed syntax.
+The next step is to move your routes to the Rails 3 router syntax.  The new router is great, but it's not incredibly convenient to migrate existing routes over to the new syntax.  Upgrading your routes is fairly simple so long as you haven't done anything complex; it's just not as easy as copying and pasting.  Some things, like `namespaces`, work the same, but most other things have a much-changed syntax.
 
 > **PROTIP**: You don't *have* to upgrade your routes immediately; the Rails core team has a legacy mapper in place at least until Rails 3.1.  It is recommended that you do it as soon as possible, though, since that mapper will not always be there.
 
@@ -188,7 +194,7 @@ Now let's take a look at the `Gemfile` that Rails generated for you:
     # Edit this Gemfile to bundle your application's dependencies.
     source 'http://rubygems.org'
 
-    gem "rails", "3.0.0.beta"
+    gem "rails", "3.0.0"
 
     ## Bundle edge rails:
     # gem "rails", :git => "git://github.com/rails/rails.git"
@@ -231,7 +237,7 @@ As mentioned before, `bundler` is much more powerful than `config.gem`, and one 
     
 Now this gem will only be added in when running the app in the `test` environment.  This technique is also useful for production only gems related to caching and what not, or for specifying special gems for your development environment, such as debuggers and log analyzers.
 
-Now that you've got a proper `Gemfile`, run `bundle pack` if you want to vendor everything or `bundle install` to install the gems to system gems.  The `bundler` is much more powerful than `config.gem`, and it helps you do more advanced tasks (e.g., bundle directly from a Git repository, as you can see in the generated `Gemfile`, specify granular paths, etc.).  So, once you move your `config.gem` calls over, you may want to look into the new features*http://github.com/carlhuda/bundler/blob/master/README.markdown*{.fn}.
+Now that you've got a proper `Gemfile`, run `bundle package` if you want to vendor everything or `bundle install` to install the gems to system gems.  The `bundler` is much more powerful than `config.gem`, and it helps you do more advanced tasks (e.g., bundle directly from a Git repository, as you can see in the generated `Gemfile`, specify granular paths, etc.).  So, once you move your `config.gem` calls over, you may want to look into the new features*http://gembundler.com*{.fn}.
 
 ### Code fixes
 
@@ -433,7 +439,7 @@ Even `:include`, which adds joins on, is now a method:
 
     posts.include(:author).where("publshed NOT NULL")
     
-That should get you started converting your code.  If you need more help, there are some great blog entries*My favorite is http://m.onkey.org/2010/1/22/active-record-query-interface*{.fn} and, of course, the RDocs.*Currently only accessible at http://api.rails.info/*{.fn}
+That should get you started converting your code.  If you need more help, there are some great blog entries*My favorite is http://m.onkey.org/2010/1/22/active-record-query-interface*{.fn} and, of course, the RDocs.*Currently only accessible at http://edgeapi.rubyonrails.org/ but should be on http://api.rubyonrails.org/ very soon.*{.fn}
 
 ### Minor pre-booting issues
 
@@ -452,7 +458,7 @@ Interesting note: Remember that `YourApp::Application` class you created earlier
     # This file is used by Rack-based servers to start the application.
 
     require ::File.expand_path('../config/environment',  __FILE__)
-    run YourApp::Application.instance
+    run YourApp::Application
 
 Neat, eh?  That's why I suggested you pick a meaningful name for that class: its touch runs quite deep in the request stack.
 

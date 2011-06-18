@@ -47,20 +47,11 @@ Then you'll probably want to run `pik update` to get the latest version.  Once i
 
 #### Installing Rails 3
 
-Now that you have a proper Ruby, it's time to get a proper Rails.  At this point, installing the Rails 3 can be sort of tricky, since there are dependencies, it's a prerelease gem, and RubyGems basically poops the bed when those two scenarios collide.  Hopefully that'll be fixed soon, but in the mean time, you can install Rails' dependencies like so:
+Now that you have a proper Ruby, it's time to get a proper Rails.  Simply install the `rails` gem and it will install everything you need:
 
-    # rails3b is a metagem for all the dependencies
-    gem install rails3b
+    gem install rails
     
-    # or if that gives you hassle, try the expanded version...
-    gem install i18n tzinfo builder memcache-client rack \
-                rack-test rack-mount erubis mail text-format thor bundler
-    
-Once all those lovely gems are installed (add `--no-ri` and `--no-rdoc` if you want to skip those/speed up your install), then install the prerelease version of Rails:
-
-    gem install rails --pre
-    
-That should install a gem named `rails 3.0.0.beta`, and if you run `rails --version`, you should see "Rails 3.0.0.beta".  Now you're ready to roll on with the Rails beta!
+Once all those lovely gems are installed (add `--no-ri` and `--no-rdoc` if you want to skip those/speed up your install), run `rails --version` to see "Rails 3.0.0".  Now you're ready to roll on with the newest release of Rails!
 
 ### Automating some of the upgrade: `rails_upgrade`
 
@@ -205,12 +196,13 @@ Of course, these lists won't apply in every situation, but in general I think th
 
 Now that your application files are prepped, you need to "generate a new app" on top of your current one (i.e., run the generator and point the app path to your current Rails 2.x app's path).  You could go in and paste or change these files manually, but doing it this way is much quicker and less error prone. 
 
-    rails ~/code/my_rails2_app/
+    rails new ~/code/my_rails2_app/
 
 The application generator is basically the same with two key differences:
 
+* You must specify `new` as the operation you're doing (this has changed from the beta versions of Rails 3).
 * The parameter that was formerly the app name is now the app path.  You can still give it a "name," and it will create the folder like normal.  But you can also give it a full path (e.g., `~code/my_application` rather than just `my_application`) and it will create the application there.
-* All parameters for the generator must go after the app path. So, previously one could do `rails -d mysql test_app`, but now that has to be `rails test_app -d mysql`.  This change is largely due to the major refactoring of the Rails generators. So even though it's somewhat of a temporary annoyance, it's definitely worth it for the flexibility and power the new generators bring (more on that soon).
+* All parameters for the generator must go after the app path. So, previously one could do `rails -d mysql test_app`, but now that has to be `rails new test_app -d mysql`.  This change is largely due to the major refactoring of the Rails generators. So even though it's somewhat of a temporary annoyance, it's definitely worth it for the flexibility and power the new generators bring (more on that soon).
 
 > **PROTIP:** Be sure to specify the right database adapter when regenerating the application; it will place the proper gem requirement for you in the `Gemfile` if you do.
 

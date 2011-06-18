@@ -10,7 +10,7 @@ This checklist should give you a general guide to upgrade to Rails 3.
 &#10063;&nbsp;&nbsp;&nbsp; | Install `rails_upgrade` plugin from `http://github.com/rails/rails_upgrade` |
 &#10063;&nbsp;&nbsp;&nbsp; | Run `rake rails:upgrade:check` and note the results |
 &#10063;&nbsp;&nbsp;&nbsp; | Run `rake rails:upgrade:backup` |
-&#10063;&nbsp;&nbsp;&nbsp; | Regenerate the application (i.e., `rails ./`) |
+&#10063;&nbsp;&nbsp;&nbsp; | Regenerate the application (i.e., `rails new .`) |
 {.overall-table}
 
 ### Reconfiguration

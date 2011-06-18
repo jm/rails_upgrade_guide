@@ -36,7 +36,7 @@ Next, install the `rails_upgrade` gem and run the `rails:upgrade:check` task to 
     You need to add a config/application.rb.
     More information: http://omgbloglol.com/post...
     
-As you can see, it didn't fail *every* check (no mailers!), but there is significant work to be done.  Run `rake rails:upgrade:backup` and regenerate the application (`rails . -d mysql` or whatever database you'd like).
+As you can see, it didn't fail *every* check (no mailers!), but there is significant work to be done.  Run `rake rails:upgrade:backup` and regenerate the application (`rails new . -d mysql` or whatever database you'd like).
 
 #### Getting to bootable
 
@@ -48,7 +48,7 @@ Running any task or command related to the app will cause it to spew various err
 
 **Changes in the API** Adding those should take away the errors related to gem requirements, but now you'll probably encounter an error like this:
 
-    /Library/Ruby/Gems/1.8/gems/activerecord-3.0.0.beta/lib/
+    /Library/Ruby/Gems/1.8/gems/activerecord-3.0.0/lib/
     active_record/base.rb:1300:
     in `method_missing': undefined method `evaluate_attribute_method' 
     for #<Class:0x1037406e0> (NoMethodError)
@@ -185,7 +185,7 @@ After that, install `rails_upgrade` and run `rake rails:upgrade:check`.  Now tak
     You now must require 'rails/test_help' not just 'test_help'.
     More information: http://weblog.rubyonrails.org...
     
-Next, run `rake rails:upgrade:backup` and regenerate the application with Rails 3 in the current path using `rails .`.
+Next, run `rake rails:upgrade:backup` and regenerate the application with Rails 3 in the current path using `rails new .`.
 
 #### Broken to bootable
 
@@ -350,5 +350,4 @@ There are a couple of loose ends to tie up before we call this upgrade finished.
 There a few things that this app teaches us about upgrading a Rails application:
 
 * **Some deprecations can be "undone" if needed**  Even though Rails Core removed the `link_to_function` method, we were able to bring it back using a plugin; this strategy makes sense since we're not going to use anything but Prototype in this application (they've also done this with `verify` and some of the dynamic form helpers in Rails 3).  I would imagine that a number of deprecated features will live on in plugins (much like `acts_as_list`, `paginate`, and friends have already with Rails 2.x), so if you use one of these feature pervasively, you probably don't need to worry about it too terribly much.
-* **Rails 3 still has bugs** In this upgrade, we sniffed out a few issues in the Rails 3 beta.  These bugs are inevitable, being a beta and all, but it is something to keep in mind.  If you encounter any odd behavior that you are pretty sure is a bug, please do help the Rails Core team out and file a bug at the Rails Lighthouse.*http://rails.lighthouseapp.com/*{.fn}
 * **Behavior has changed in subtle ways** A few errors we stumbled upon, such as the order of callbacks and the behavior of `scopes` and associations, are subtle changes in behavior.  These changes are to be expected, but if undocumented, they can cause you a lot of hassle (as they did here).  Fortunately, we were covered by tests, but if we didn't have such a good suite of tests, we might have been in a world of pain.

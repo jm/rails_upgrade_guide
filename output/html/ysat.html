@@ -215,20 +215,11 @@ source ~/.rvm/scripts/rvm</code></pre>
 
 <h4 id='installing_rails_3'><span class='maruku_section_number'>2.1.2. </span>Installing Rails 3</h4>
 
-<p>Now that you have a proper Ruby, it&#8217;s time to get a proper Rails. At this point, installing the Rails 3 can be sort of tricky, since there are dependencies, it&#8217;s a prerelease gem, and RubyGems basically poops the bed when those two scenarios collide. Hopefully that&#8217;ll be fixed soon, but in the mean time, you can install Rails&#8217; dependencies like so:</p>
+<p>Now that you have a proper Ruby, it&#8217;s time to get a proper Rails. Simply install the <code style='background-color: #dddddd;'>rails</code> gem and it will install everything you need:</p>
 
-<pre style='background-color: #dddddd;'><code># rails3b is a metagem for all the dependencies
-gem install rails3b
+<pre style='background-color: #dddddd;'><code>gem install rails</code></pre>
 
-# or if that gives you hassle, try the expanded version...
-gem install i18n tzinfo builder memcache-client rack \
-            rack-test rack-mount erubis mail text-format thor bundler</code></pre>
-
-<p>Once all those lovely gems are installed (add <code style='background-color: #dddddd;'>--no-ri</code> and <code style='background-color: #dddddd;'>--no-rdoc</code> if you want to skip those/speed up your install), then install the prerelease version of Rails:</p>
-
-<pre style='background-color: #dddddd;'><code>gem install rails --pre</code></pre>
-
-<p>That should install a gem named <code style='background-color: #dddddd;'>rails 3.0.0.beta</code>, and if you run <code style='background-color: #dddddd;'>rails --version</code>, you should see &#8220;Rails 3.0.0.beta&#8221;. Now you&#8217;re ready to roll on with the Rails beta!</p>
+<p>Once all those lovely gems are installed (add <code style='background-color: #dddddd;'>--no-ri</code> and <code style='background-color: #dddddd;'>--no-rdoc</code> if you want to skip those/speed up your install), run <code style='background-color: #dddddd;'>rails --version</code> to see &#8220;Rails 3.0.0&#8221;. Now you&#8217;re ready to roll on with the newest release of Rails!</p>
 
 <h3 id='automating_some_of_the_upgrade_'><span class='maruku_section_number'>2.2. </span>Automating some of the upgrade: <code style='background-color: #dddddd;'>rails_upgrade</code></h3>
 
@@ -393,14 +384,16 @@ gem &#39;aws-s3&#39;, :require_as=&gt;&quot;aws/s3&quot;</code></pre>
 
 <p>Now that your application files are prepped, you need to &#8220;generate a new app&#8221; on top of your current one (i.e., run the generator and point the app path to your current Rails 2.x app&#8217;s path). You could go in and paste or change these files manually, but doing it this way is much quicker and less error prone.</p>
 
-<pre style='background-color: #dddddd;'><code>rails ~/code/my_rails2_app/</code></pre>
+<pre style='background-color: #dddddd;'><code>rails new ~/code/my_rails2_app/</code></pre>
 
 <p>The application generator is basically the same with two key differences:</p>
 
 <ul>
+<li>You must specify <code style='background-color: #dddddd;'>new</code> as the operation you&#8217;re doing (this has changed from the beta versions of Rails 3).</li>
+
 <li>The parameter that was formerly the app name is now the app path. You can still give it a &#8220;name,&#8221; and it will create the folder like normal. But you can also give it a full path (e.g., <code style='background-color: #dddddd;'>~code/my_application</code> rather than just <code style='background-color: #dddddd;'>my_application</code>) and it will create the application there.</li>
 
-<li>All parameters for the generator must go after the app path. So, previously one could do <code style='background-color: #dddddd;'>rails -d mysql test_app</code>, but now that has to be <code style='background-color: #dddddd;'>rails test_app -d mysql</code>. This change is largely due to the major refactoring of the Rails generators. So even though it&#8217;s somewhat of a temporary annoyance, it&#8217;s definitely worth it for the flexibility and power the new generators bring (more on that soon).</li>
+<li>All parameters for the generator must go after the app path. So, previously one could do <code style='background-color: #dddddd;'>rails -d mysql test_app</code>, but now that has to be <code style='background-color: #dddddd;'>rails new test_app -d mysql</code>. This change is largely due to the major refactoring of the Rails generators. So even though it&#8217;s somewhat of a temporary annoyance, it&#8217;s definitely worth it for the flexibility and power the new generators bring (more on that soon).</li>
 </ul>
 
 <blockquote>
@@ -443,7 +436,11 @@ YourApp::Application.initialize!</code></pre>
 
 <p>Now open up <code style='background-color: #dddddd;'>application.rb</code>. If you generated the files using the Rails 3 generator, you should have one that looks something like this:</p>
 
-<pre style='background-color: #dddddd;'><code>module TestDevApp
+<pre style='background-color: #dddddd;'><code># Necessary requires ...
+
+Bundler.require(:default, Rails.env) if defined?(Bundler)
+
+module TestDevApp
   class Application &lt; Rails::Application
     # ...Insert lots of example comments here...
     
@@ -452,13 +449,15 @@ YourApp::Application.initialize!</code></pre>
   end
 end</code></pre>
 
-<p>For the most part, all the code inside the Rails initializer block from your old <code style='background-color: #dddddd;'>environment.rb</code> (i.e., all your <code style='background-color: #dddddd;'>config.*</code> calls) should transfer straight over: just use the <code style='background-color: #dddddd;'>rails:upgrade:configuration</code> method or copy and paste them inside the class body. That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend you move it either into an initializer or to the bottom of <code style='background-color: #dddddd;'>application.rb</code>.</p>
+<p>The line about Bundler will be your best friend if you ever decide you don&#8217;t want to use it for whatever reason (some people love it, others hate it and find solace in other solutions like <code style='background-color: #dddddd;'>isolate</code>, while others hate the whole concept). That line requires all bundled gems for the current environment (more on Bundler and environments in a bit); you could also force and environment here or add more environment requires.</p>
+
+<p>Now take a look at the <code style='background-color: #dddddd;'>Application</code> class body; this is where all that configuration code from <code style='background-color: #dddddd;'>environment.rb</code> now lives. For the most part, all the code inside the Rails initializer block from your old <code style='background-color: #dddddd;'>environment.rb</code> (i.e., all your <code style='background-color: #dddddd;'>config.*</code> calls) should transfer straight over: just use the <code style='background-color: #dddddd;'>rails:upgrade:configuration</code> method or copy and paste them inside the class body. That part of the configuration is simple; if you have any extraneous code outside of that configuration block, I heartily recommend you move it either into an initializer or to the bottom of <code style='background-color: #dddddd;'>application.rb</code>.</p>
 
 <blockquote>
 <p><strong>PROTIP:</strong> You may be wondering, &#8220;What about <code style='background-color: #dddddd;'>RAILS_GEM_VERSION</code>?&#8221; To specify what version of Rails to lock your application to, specify it in the <code style='background-color: #dddddd;'>Gemfile</code> according to the <code style='background-color: #dddddd;'>bundler</code> syntax (see Section 3.2.2 for more information).</p>
 </blockquote>
 
-<p>Next, take a look at some of the newly generated code. You&#8217;ll notice a block like this:</p>
+<p>If you want to use a different ORM, template engine, or testing framework (that has Rails 3 compatibility), then you need to configure it here also. A configuration block for those values looks like this:</p>
 
 <pre style='background-color: #dddddd;'><code>config.generators do |g|
   g.orm             :active_record
@@ -466,7 +465,7 @@ end</code></pre>
   g.test_framework  :test_unit, :fixture =&gt; true
 end</code></pre>
 
-<p>This is where you can configure what ORM, test framework, and template engine Rails will use. Since you&#8217;re upgrading existing code, you&#8217;ll probably stick with the defaults (unless, of course, you&#8217;re already using something like <code style='background-color: #dddddd;'>haml</code>), but you could substitute in something like <code style='background-color: #dddddd;'>:datamapper</code> or <code style='background-color: #dddddd;'>:sequel</code> for <code style='background-color: #dddddd;'>:active_record</code>, <code style='background-color: #dddddd;'>:haml</code> for <code style='background-color: #dddddd;'>:erb</code>, or <code style='background-color: #dddddd;'>:rspec</code> for <code style='background-color: #dddddd;'>:test_unit</code> (once they get it working with Rails 3). Doing so will set the generators for models, views, etc., to use your tool of choice. For example, if you generate a scaffold with <code style='background-color: #dddddd;'>haml</code> and <code style='background-color: #dddddd;'>rspec</code> as your tools, it should in theory generate the templates with Haml syntax and the tests using RSpec. (I don&#8217;t know if all these generators are available yet, but they should be soon.)</p>
+<p>Since you&#8217;re upgrading existing code, you&#8217;ll probably stick with the defaults and won&#8217;t have to worry about this bit of configuraiton (unless, of course, you&#8217;re already using something like <code style='background-color: #dddddd;'>haml</code>), but you could substitute in something like <code style='background-color: #dddddd;'>:datamapper</code> or <code style='background-color: #dddddd;'>:sequel</code> for <code style='background-color: #dddddd;'>:active_record</code>, <code style='background-color: #dddddd;'>:haml</code> for <code style='background-color: #dddddd;'>:erb</code>, or <code style='background-color: #dddddd;'>:rspec</code> for <code style='background-color: #dddddd;'>:test_unit</code> (once the developers get your choice working with Rails 3). Doing so will set the generators for models, views, etc., to use your tool of choice. For example, if you generate a scaffold with <code style='background-color: #dddddd;'>haml</code> and <code style='background-color: #dddddd;'>rspec</code> as your tools, it should in theory generate the templates with Haml syntax and the tests using RSpec.</p>
 
 <p>The <code style='background-color: #dddddd;'>config/application.rb</code> file also houses some configuration for other things.</p>
 
@@ -496,7 +495,7 @@ end</code></pre>
 
 <h4 id='converting_your_routes_file'><span class='maruku_section_number'>3.2.1. </span>Converting your routes file</h4>
 
-<p>The next step is to move your routes to the Rails 3 router syntax. The new router is great, but it&#8217;s not incredibly easy to migrate existing routes over to the new syntax. Upgrading your routes is fairly simple so long as you haven&#8217;t done anything complex; it&#8217;s just not as easy as copying and pasting. Some things, like <code style='background-color: #dddddd;'>namespaces</code>, work the same, but most other things have a much-changed syntax.</p>
+<p>The next step is to move your routes to the Rails 3 router syntax. The new router is great, but it&#8217;s not incredibly convenient to migrate existing routes over to the new syntax. Upgrading your routes is fairly simple so long as you haven&#8217;t done anything complex; it&#8217;s just not as easy as copying and pasting. Some things, like <code style='background-color: #dddddd;'>namespaces</code>, work the same, but most other things have a much-changed syntax.</p>
 
 <blockquote>
 <p><strong>PROTIP</strong>: You don&#8217;t <em>have</em> to upgrade your routes immediately; the Rails core team has a legacy mapper in place at least until Rails 3.1. It is recommended that you do it as soon as possible, though, since that mapper will not always be there.</p>
@@ -624,7 +623,7 @@ gem &quot;aws-s3&quot;, &quot;0.5.1&quot;, :require =&gt; &quot;aws/s3&quot;</co
 <pre style='background-color: #dddddd;'><code># Edit this Gemfile to bundle your application&#39;s dependencies.
 source &#39;http://rubygems.org&#39;
 
-gem &quot;rails&quot;, &quot;3.0.0.beta&quot;
+gem &quot;rails&quot;, &quot;3.0.0&quot;
 
 ## Bundle edge rails:
 # gem &quot;rails&quot;, :git =&gt; &quot;git://github.com/rails/rails.git&quot;
@@ -667,7 +666,7 @@ gem &quot;mocha&quot;, :group =&gt; :test</code></pre>
 
 <p>Now this gem will only be added in when running the app in the <code style='background-color: #dddddd;'>test</code> environment. This technique is also useful for production only gems related to caching and what not, or for specifying special gems for your development environment, such as debuggers and log analyzers.</p>
 
-<p>Now that you&#8217;ve got a proper <code style='background-color: #dddddd;'>Gemfile</code>, run <code style='background-color: #dddddd;'>bundle pack</code> if you want to vendor everything or <code style='background-color: #dddddd;'>bundle install</code> to install the gems to system gems. The <code style='background-color: #dddddd;'>bundler</code> is much more powerful than <code style='background-color: #dddddd;'>config.gem</code>, and it helps you do more advanced tasks (e.g., bundle directly from a Git repository, as you can see in the generated <code style='background-color: #dddddd;'>Gemfile</code>, specify granular paths, etc.). So, once you move your <code style='background-color: #dddddd;'>config.gem</code> calls over, you may want to look into the new features<em class='fn'>http://github.com/carlhuda/bundler/blob/master/README.markdown</em>.</p>
+<p>Now that you&#8217;ve got a proper <code style='background-color: #dddddd;'>Gemfile</code>, run <code style='background-color: #dddddd;'>bundle package</code> if you want to vendor everything or <code style='background-color: #dddddd;'>bundle install</code> to install the gems to system gems. The <code style='background-color: #dddddd;'>bundler</code> is much more powerful than <code style='background-color: #dddddd;'>config.gem</code>, and it helps you do more advanced tasks (e.g., bundle directly from a Git repository, as you can see in the generated <code style='background-color: #dddddd;'>Gemfile</code>, specify granular paths, etc.). So, once you move your <code style='background-color: #dddddd;'>config.gem</code> calls over, you may want to look into the new features<em class='fn'>http://gembundler.com</em>.</p>
 
 <h3 id='code_fixes'><span class='maruku_section_number'>3.3. </span>Code fixes</h3>
 
@@ -882,7 +881,7 @@ posts.each {|post| post.destroy }</code></pre>
 
 <pre style='background-color: #dddddd;'><code>posts.include(:author).where(&quot;publshed NOT NULL&quot;)</code></pre>
 
-<p>That should get you started converting your code. If you need more help, there are some great blog entries<em class='fn'>My favorite is http://m.onkey.org/2010/1/22/active-record-query-interface</em> and, of course, the RDocs.<em class='fn'>Currently only accessible at http://api.rails.info/</em></p>
+<p>That should get you started converting your code. If you need more help, there are some great blog entries<em class='fn'>My favorite is http://m.onkey.org/2010/1/22/active-record-query-interface</em> and, of course, the RDocs.<em class='fn'>Currently only accessible at http://edgeapi.rubyonrails.org/ but should be on http://api.rubyonrails.org/ very soon.</em></p>
 
 <h3 id='minor_prebooting_issues'><span class='maruku_section_number'>3.4. </span>Minor pre-booting issues</h3>
 
@@ -901,7 +900,7 @@ posts.each {|post| post.destroy }</code></pre>
 <pre style='background-color: #dddddd;'><code># This file is used by Rack-based servers to start the application.
 
 require ::File.expand_path(&#39;../config/environment&#39;,  __FILE__)
-run YourApp::Application.instance</code></pre>
+run YourApp::Application</code></pre>
 
 <p>Neat, eh? That&#8217;s why I suggested you pick a meaningful name for that class: its touch runs quite deep in the request stack.</p>
 
@@ -1600,7 +1599,7 @@ New file needed: config/application.rb
 You need to add a config/application.rb.
 More information: http://omgbloglol.com/post...</code></pre>
 
-<p>As you can see, it didn&#8217;t fail <em>every</em> check (no mailers!), but there is significant work to be done. Run <code style='background-color: #dddddd;'>rake rails:upgrade:backup</code> and regenerate the application (<code style='background-color: #dddddd;'>rails . -d mysql</code> or whatever database you&#8217;d like).</p>
+<p>As you can see, it didn&#8217;t fail <em>every</em> check (no mailers!), but there is significant work to be done. Run <code style='background-color: #dddddd;'>rake rails:upgrade:backup</code> and regenerate the application (<code style='background-color: #dddddd;'>rails new . -d mysql</code> or whatever database you&#8217;d like).</p>
 
 <h4 id='getting_to_bootable'><span class='maruku_section_number'>5.1.1. </span>Getting to bootable</h4>
 
@@ -1612,7 +1611,7 @@ gem &#39;will_paginate&#39;, &#39;3.0.pre&#39;</code></pre>
 
 <p><strong>Changes in the API</strong> Adding those should take away the errors related to gem requirements, but now you&#8217;ll probably encounter an error like this:</p>
 
-<pre style='background-color: #dddddd;'><code>/Library/Ruby/Gems/1.8/gems/activerecord-3.0.0.beta/lib/
+<pre style='background-color: #dddddd;'><code>/Library/Ruby/Gems/1.8/gems/activerecord-3.0.0/lib/
 active_record/base.rb:1300:
 in `method_missing&#39;: undefined method `evaluate_attribute_method&#39; 
 for #&lt;Class:0x1037406e0&gt; (NoMethodError)</code></pre>
@@ -1758,7 +1757,7 @@ Deprecated test_help path
 You now must require &#39;rails/test_help&#39; not just &#39;test_help&#39;.
 More information: http://weblog.rubyonrails.org...</code></pre>
 
-<p>Next, run <code style='background-color: #dddddd;'>rake rails:upgrade:backup</code> and regenerate the application with Rails 3 in the current path using <code style='background-color: #dddddd;'>rails .</code>.</p>
+<p>Next, run <code style='background-color: #dddddd;'>rake rails:upgrade:backup</code> and regenerate the application with Rails 3 in the current path using <code style='background-color: #dddddd;'>rails new .</code>.</p>
 
 <h4 id='broken_to_bootable'><span class='maruku_section_number'>5.2.1. </span>Broken to bootable</h4>
 
@@ -1931,8 +1930,6 @@ end</code></pre>
 <ul>
 <li><strong>Some deprecations can be &#8220;undone&#8221; if needed</strong> Even though Rails Core removed the <code style='background-color: #dddddd;'>link_to_function</code> method, we were able to bring it back using a plugin; this strategy makes sense since we&#8217;re not going to use anything but Prototype in this application (they&#8217;ve also done this with <code style='background-color: #dddddd;'>verify</code> and some of the dynamic form helpers in Rails 3). I would imagine that a number of deprecated features will live on in plugins (much like <code style='background-color: #dddddd;'>acts_as_list</code>, <code style='background-color: #dddddd;'>paginate</code>, and friends have already with Rails 2.x), so if you use one of these feature pervasively, you probably don&#8217;t need to worry about it too terribly much.</li>
 
-<li><strong>Rails 3 still has bugs</strong> In this upgrade, we sniffed out a few issues in the Rails 3 beta. These bugs are inevitable, being a beta and all, but it is something to keep in mind. If you encounter any odd behavior that you are pretty sure is a bug, please do help the Rails Core team out and file a bug at the Rails Lighthouse.<em class='fn'>http://rails.lighthouseapp.com/</em></li>
-
 <li><strong>Behavior has changed in subtle ways</strong> A few errors we stumbled upon, such as the order of callbacks and the behavior of <code style='background-color: #dddddd;'>scopes</code> and associations, are subtle changes in behavior. These changes are to be expected, but if undocumented, they can cause you a lot of hassle (as they did here). Fortunately, we were covered by tests, but if we didn&#8217;t have such a good suite of tests, we might have been in a world of pain.</li>
 </ul>
 
@@ -1944,7 +1941,7 @@ end</code></pre>
 <table class='overall-table'><thead><tr><th>&#10063;&#160;&#160;&#160;</th><th>&#160;</th></tr></thead><tbody><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Install <code style='background-color: #dddddd;'>rails_upgrade</code> plugin from <code style='background-color: #dddddd;'>http://github.com/rails/rails_upgrade</code></td>
 </tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Run <code style='background-color: #dddddd;'>rake rails:upgrade:check</code> and note the results</td>
 </tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Run <code style='background-color: #dddddd;'>rake rails:upgrade:backup</code></td>
-</tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Regenerate the application (i.e., <code style='background-color: #dddddd;'>rails ./</code>)</td>
+</tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Regenerate the application (i.e., <code style='background-color: #dddddd;'>rails new .</code>)</td>
 </tr></tbody></table>
 <h3 id='reconfiguration'><span class='maruku_section_number'>6.2. </span>Reconfiguration</h3>
 <table class='overall-table'><thead><tr><th>&#10063;&#160;&#160;&#160;</th><th>&#160;</th></tr></thead><tbody><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Move <code style='background-color: #dddddd;'>Initializer</code> code from <code style='background-color: #dddddd;'>environment.rb</code> to <code style='background-color: #dddddd;'>application.rb</code></td>
@@ -1994,9 +1991,14 @@ end</code></pre>
 </tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'><code style='background-color: #dddddd;'>rails:unfreeze</code> is deprecated.</td><td style='text-align: right;'>Use Bundler.</td>
 </tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'><code style='background-color: #dddddd;'>Date#last_year</code> is deprecated.</td><td style='text-align: right;'>Use <code style='background-color: #dddddd;'>Date#prev_year</code>.</td>
 </tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'><code style='background-color: #dddddd;'>Date#last_month</code> is deprecated.</td><td style='text-align: right;'>Use <code style='background-color: #dddddd;'>Date#prev_month</code>.</td>
+</tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'><code style='background-color: #dddddd;'>Object#returning</code> is deprecated.</td><td style='text-align: right;'>Use <code style='background-color: #dddddd;'>Object#tap</code> or another modern Ruby equivalent.</td>
+</tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'><code style='background-color: #dddddd;'>class_inheritable_attribute</code> is frowned upon.</td><td style='text-align: right;'>Not officially deprecated but you should use <code style='background-color: #dddddd;'>class_attribute</code> instead.</td>
+</tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'><code style='background-color: #dddddd;'>superclass_delegating_accessor</code> is deprecated.</td><td style='text-align: right;'>Use the <code style='background-color: #dddddd;'>extlib</code> version.</td>
 </tr></tbody></table>
 <h3 id='plugins'><span class='maruku_section_number'>7.2. </span>Plugins</h3>
 <table class='deprecation-table'><thead><tr><th>&#160;</th><th>Deprecation</th><th>How to fix it</th></tr></thead><tbody><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Putting Rake tasks in <code style='background-color: #dddddd;'>[path]/tasks</code> or <code style='background-color: #dddddd;'>[path]/rails/tasks</code> is no longer supported.</td><td style='text-align: right;'>Place them in <code style='background-color: #dddddd;'>[path]/lib/tasks</code>.</td>
+</tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Putting generators in <code style='background-color: #dddddd;'>[path]/generators</code> or <code style='background-color: #dddddd;'>[path]/rails_generators</code> is no longer supported.</td><td style='text-align: right;'>Place them in <code style='background-color: #dddddd;'>[path]/lib/generators</code>.</td>
+</tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>Generator classes do not inherit from <code style='background-color: #dddddd;'>Rails::Generator</code> anymore.</td><td style='text-align: right;'>They must inherit from a <code style='background-color: #dddddd;'>Rails::Generators::*</code> class (usually <code style='background-color: #dddddd;'>Base</code>).</td>
 </tr><tr><td style='text-align: left;'>&#10063;&#160;&#160;&#160;</td><td style='text-align: left;'>The use of <code style='background-color: #dddddd;'>rails/init.rb</code> is deprecated.</td><td style='text-align: right;'>Put the logic in a top level/plugin root <code style='background-color: #dddddd;'>init.rb</code>.</td>
 </tr></tbody></table>
 <h3 id='controllersdispatch'><span class='maruku_section_number'>7.3. </span>Controllers/dispatch</h3>
