@@ -4,8 +4,13 @@ I wrote this handbook leading up to the Rails 3 release; now that we're at Rails
 
 ## Caveats
 
-* To render as intended, you need PrinceXML.  If someone wants to translate it into some other usable format that doesn't require Prince for a nice PDF, then go for it.  I'll merge that pull request immediately.
-* You'll also need a long-lost hacked version of Maruku (I added a bit so you could add CSS classes to Markdown elements).  Again, if someone would like to hack it such that that's not needed, then please, please do.  I'll merge it immediately.
+* **To render as intended, you need PrinceXML.**  If someone wants to translate it into some other usable format that doesn't require Prince for a nice PDF, then go for it.  I'll merge that pull request immediately.
+* **You'll also need a long-lost hacked version of Maruku** (I added a bit so you could add CSS classes to Markdown elements).  Again, if someone would like to hack it such that that's not needed, then please, please do.  I'll merge it immediately.
+
+## How can I help?
+
+* **Update it for 3.2!**  There are some bits that will require extra work and others that don't have the same upgrade path.  Any fixing would be appreciated.
+* **Help convert it to an actual Rails guide** It'd be neat to convert it to Textile and get it integrated into the actual docrails guides for wider publishing.
 
 ## License
 
