@@ -1,0 +1,12 @@
+# Rails 3 Upgrade Handbook
+
+I wrote this handbook leading up to the Rails 3 release; now that we're at Rails 3.2.x, I figure it's time to release this information into the wild. 
+
+## Caveats
+
+* To render as intended, you need PrinceXML.  If someone wants to translate it into some other usable format that doesn't require Prince for a nice PDF, then go for it.  I'll merge that pull request immediately.
+* You'll also need a long-lost hacked version of Maruku (I added a bit so you could add CSS classes to Markdown elements).  Again, if someone would like to hack it such that that's not needed, then please, please do.  I'll merge it immediately.
+
+## License
+
+Do whatever you want with it as long as you attribute me (Jeremy McAnally) somewhere.  It's just common courtesy. :)
